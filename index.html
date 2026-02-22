@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lifewood - AI-Powered Data Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Polyfill process for browser environment to prevent 'ReferenceError: process is not defined'
+      window.process = window.process || { env: {} };
+      
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              lifewood: {
+                green: '#046241',    // Castleton Green
+                dark: '#133020',     // Dark Serpent
+                saffron: '#FFB347',  // Saffron
+                earth: '#FFC370',    // Earth Yellow
+                paper: '#F5EEDB',    // Paper
+                seaSalt: '#F9F7F7',  // Sea Salt
+                white: '#FFFFFF'
+              }
+            },
+            fontFamily: {
+              sans: ['Manrope', 'sans-serif'],
+              poppins: ['Poppins', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      .bg-hero-gradient {
+        background: linear-gradient(135deg, #046241 0%, #133020 100%);
+        transition: background 0.5s ease;
+      }
+      .dark .bg-hero-gradient {
+        background: linear-gradient(135deg, #022b1c 0%, #133020 100%);
+      }
+      img {
+        transition: filter 0.3s ease;
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="font-sans bg-lifewood-seaSalt text-lifewood-dark dark:bg-lifewood-dark dark:text-lifewood-seaSalt overflow-x-hidden transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
