@@ -93,11 +93,13 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.project}</label>
                   <select 
                     required
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none appearance-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt text-lifewood-dark border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none appearance-none dark:bg-lifewood-dark dark:border-lifewood-paper/12 dark:text-lifewood-seaSalt"
                   >
-                      <option value="">{t.selectProject}</option>
+                      <option value="" className="text-lifewood-dark dark:text-lifewood-seaSalt dark:bg-lifewood-dark">{t.selectProject}</option>
                     {t.projectOptions.map((option: any) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value} className="text-lifewood-dark dark:text-lifewood-seaSalt dark:bg-lifewood-dark">
+                        {option.label}
+                      </option>
                     ))}
                   </select>
                 </div>
