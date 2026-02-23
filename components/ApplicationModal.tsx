@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ApplicationModalProps {
   isOpen: boolean;
@@ -8,7 +8,19 @@ interface ApplicationModalProps {
 }
 
 const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t }) => {
+  const [submitted, setSubmitted] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    setSubmitted(false);
+    onClose();
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center p-3 overflow-y-hidden bg-lifewood-dark/40 backdrop-blur-sm">
@@ -16,7 +28,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
         
         {/* Top-right close 'X' button */}
         <button 
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-6 right-6 text-lifewood-dark hover:opacity-70 transition-opacity z-10 dark:text-lifewood-paper"
           aria-label={t.closeButton}
         >
@@ -31,17 +43,23 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
             <h2 className="text-3xl md:text-4xl font-extrabold text-lifewood-green mb-3 font-sans dark:text-lifewood-saffron">
               {t.joinTitle}
             </h2>
-            <p className="text-lifewood-dark/70 text-base leading-relaxed max-w-md mx-auto dark:text-lifewood-seaSalt/70">
+            <p className="text-lifewood-dark/70 text-base leading-relaxed max-w-md mx-auto dark:text-lifewood-seaSalt/90">
               {t.joinDescription}
             </p>
           </div>
 
           {/* Form Card */}
-          <div className="bg-lifewood-paper/95 rounded-2xl p-4 shadow-md border border-lifewood-paper/20 dark:bg-lifewood-dark dark:border-lifewood-paper/12 dark:shadow-lg">
+          <div className="bg-lifewood-paper/95 rounded-2xl p-4 shadow-md border border-lifewood-paper/20 dark:bg-lifewood-dark/95 dark:border-lifewood-paper/20 dark:shadow-lg">
             <h3 className="text-xl md:text-2xl font-bold text-lifewood-green mb-2 dark:text-lifewood-earth">{t.formTitle}</h3>
-            <p className="text-lifewood-dark/60 text-sm mb-4 dark:text-lifewood-seaSalt/70">{t.formDesc}</p>
+            <p className="text-lifewood-dark/60 text-sm mb-4 dark:text-lifewood-seaSalt/85">{t.formDesc}</p>
 
-            <form className="space-y-2.5" onSubmit={(e) => { e.preventDefault(); alert(t.successMessage); onClose(); }}>
+            {submitted && (
+              <div className="mb-4 rounded-lg border border-lifewood-green/35 bg-lifewood-green/10 px-4 py-3 text-sm font-semibold text-lifewood-green dark:border-lifewood-saffron/60 dark:bg-lifewood-saffron/10 dark:text-lifewood-saffron">
+                {t.successMessage}
+              </div>
+            )}
+
+            <form className="space-y-2.5" onSubmit={handleSubmit}>
               <div className="pr-4 pb-6 space-y-2.5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -49,7 +67,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <input 
                       type="text" 
                       required
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
                   </div>
                   <div className="space-y-2">
@@ -57,7 +75,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <input 
                       type="text" 
                       required
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
                   </div>
                 </div>
@@ -66,8 +84,16 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.age}</label>
                     <input 
-                      type="number" 
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={99}
+                      onInput={(e) => {
+                        const target = e.currentTarget;
+                        const digits = target.value.replace(/\D/g, '').slice(0, 2);
+                        target.value = digits;
+                      }}
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
                   </div>
                   <div className="space-y-2">
@@ -75,7 +101,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <input 
                       type="email" 
                       required
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
                   </div>
                 </div>
@@ -85,7 +111,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <input 
                     type="text" 
                     placeholder={t.degreePlaceholder}
-                    className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                    className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                   />
                 </div>
 
@@ -93,7 +119,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.project}</label>
                   <select 
                     required
-                      className="w-full px-3 py-2 bg-lifewood-seaSalt text-lifewood-dark border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none appearance-none dark:bg-lifewood-dark dark:border-lifewood-paper/12 dark:text-lifewood-seaSalt"
+                      className="w-full px-3 py-2 bg-lifewood-seaSalt text-lifewood-dark border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none appearance-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt"
                   >
                       <option value="" className="text-lifewood-dark dark:text-lifewood-seaSalt dark:bg-lifewood-dark">{t.selectProject}</option>
                     {t.projectOptions.map((option: any) => (
@@ -109,7 +135,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <textarea 
                     rows={3}
                       placeholder={t.experiencePlaceholder}
-                    className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none resize-none dark:bg-lifewood-dark/76 dark:border-lifewood-paper/12 dark:text-lifewood-paper"
+                    className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none resize-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                   ></textarea>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -121,7 +147,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   </button>
                   <button 
                     type="button"
-                    onClick={onClose}
+                    onClick={handleClose}
                     style={{ backgroundColor: '#046241' }}
                     className="flex-1 py-2 text-white font-bold rounded-lg transform transition duration-200 ease-in-out hover:opacity-90 hover:shadow-md active:scale-95 focus:outline-none"
                   >
