@@ -14,6 +14,7 @@ import CTASection from './components/CTASection.tsx';
 import Footer from './components/Footer.tsx';
 import AIConsultant from './components/AIConsultant.tsx';
 import ApplicationModal from './components/ApplicationModal.tsx';
+import ContactModal from './components/ContactModal.tsx';
 import { Language, Theme } from './types.ts';
 import ClickSpark from './components/ClickSpark';
 
@@ -216,6 +217,18 @@ const translations = {
       description: 'We provide global Data Engineering Services to enable AI Solutions. Reach out to our team of experts today.',
       button: 'Contact Us Today'
     },
+    contactModal: {
+      fullName: 'Your full name',
+      email: 'email@company.com',
+      inquiryType: 'Inquiry Type',
+      inquiryGeneral: 'General Inquiry',
+      inquiryServices: 'Services',
+      inquiryPartnership: 'Partnership',
+      message: 'How can we help?',
+      send: 'Send Message',
+      closeButton: 'Close',
+      successMessage: 'Message sent successfully.'
+    },
     footer: {
       brandDescription: 'Empowering innovation through AI-powered data solutions. Bringing big data to life for the good of humankind.',
       company: 'Company',
@@ -415,6 +428,7 @@ const deepMerge = (base: any, override: any): any => {
 
 const App: React.FC = () => {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('lifewood-lang') as Language) || 'en');
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('lifewood-theme') as Theme) || 'light');
 
@@ -435,6 +449,8 @@ const App: React.FC = () => {
 
   const openApplyModal = () => setIsApplyModalOpen(true);
   const closeApplyModal = () => setIsApplyModalOpen(false);
+  const openContactModal = () => setIsContactModalOpen(true);
+  const closeContactModal = () => setIsContactModalOpen(false);
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   return (
@@ -449,7 +465,7 @@ const App: React.FC = () => {
         t={t.nav}
       />
       <main>
-        <Hero onApplyClick={openApplyModal} t={t.hero} />
+        <Hero onApplyClick={openContactModal} t={t.hero} />
         <About onApplyClick={openApplyModal} t={t.about} />
         <StatsBar t={t.statsBar} />
         <Services t={t.services} />
@@ -458,12 +474,13 @@ const App: React.FC = () => {
         <Partners t={t.partners} />
         <Projects t={t.projects} />
         <Careers onApplyClick={openApplyModal} t={t.careers} />
-        <CTASection onApplyClick={openApplyModal} t={t.cta} />
+        <CTASection onApplyClick={openContactModal} t={t.cta} />
       </main>
       <Footer t={t.footer} />
       <AIConsultant t={t.ai} lang={language} />
       
       <ApplicationModal isOpen={isApplyModalOpen} onClose={closeApplyModal} t={t.careers} />
+      <ContactModal isOpen={isContactModalOpen} onClose={closeContactModal} t={t.contactModal} />
     </div>
     </ClickSpark>
   );
