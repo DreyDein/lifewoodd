@@ -1,12 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import { Language } from '../types.ts';
 
 interface AIConsultantProps {
   t: any;
+  lang: Language;
 }
 
-const AIConsultant: React.FC<AIConsultantProps> = ({ t }) => {
+const AIConsultant: React.FC<AIConsultantProps> = ({ t, lang }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([
     { role: 'ai', text: t.greeting }
@@ -18,6 +20,15 @@ const AIConsultant: React.FC<AIConsultantProps> = ({ t }) => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].role === 'ai') {
+        return [{ role: 'ai', text: t.greeting }];
+      }
+      return prev;
+    });
+  }, [t.greeting]);
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
@@ -32,11 +43,21 @@ const AIConsultant: React.FC<AIConsultantProps> = ({ t }) => {
       // and to avoid issues with early script execution.
       const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey });    
+      const langNames: Record<Language, string> = {
+        en: 'English',
+        fil: 'Filipino',
+        ja: 'Japanese',
+        ko: 'Korean',
+        zh: 'Chinese',
+        es: 'Spanish',
+      };
+
+      const responseLanguage = langNames[lang];
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [{ role: 'user', parts: [{ text: userMessage }] }],
         config: {
-          systemInstruction: 'You are a professional AI Consultant for Lifewood, a global provider of data services. Your goal is to answer questions about Lifewood\'s services (Audio, Image, Video, Text processing) and explain how AI data labeling and collection can help businesses. Keep your answers concise, professional, and helpful. If asked about pricing or specific quotes, encourage the user to reach out to the sales team at contact@lifewood.com.',
+          systemInstruction: `You are a professional AI Consultant for Lifewood, a global provider of data services. Your goal is to answer questions about Lifewood's services (Audio, Image, Video, Text processing) and explain how AI data labeling and collection can help businesses. Keep your answers concise, professional, and helpful. If asked about pricing or specific quotes, encourage the user to reach out to the sales team at contact@lifewood.com. Always reply in ${responseLanguage}.`,
           temperature: 0.7,
           thinkingConfig: { thinkingBudget: 0 } // Disable thinking for faster response on simple chat
         },

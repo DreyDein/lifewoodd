@@ -357,7 +357,7 @@ const App: React.FC = () => {
         <CTASection onApplyClick={openApplyModal} t={t.cta} />
       </main>
       <Footer t={t.footer} />
-      <AIConsultant t={t.ai} />
+      <AIConsultant t={t.ai} lang={language} />
       
       <ApplicationModal isOpen={isApplyModalOpen} onClose={closeApplyModal} t={t.careers} />
     </div>

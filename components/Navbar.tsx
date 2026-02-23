@@ -45,14 +45,19 @@ const Navbar: React.FC<NavbarProps> = ({ onApplyClick, currentLang, onLangChange
     { name: t.careers, href: '#careers' },
   ];
 
-  const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'fil', label: 'Filipino' },
-    { code: 'ja', label: 'Japanese' },
-    { code: 'ko', label: 'Korean' },
-    { code: 'zh', label: 'Chinese' },
-    { code: 'es', label: 'Spanish' },
-  ];
+  const languageNames: Record<Language, Record<Language, string>> = {
+    en: { en: 'English', fil: 'Filipino', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', es: 'Spanish' },
+    fil: { en: 'Ingles', fil: 'Filipino', ja: 'Hapones', ko: 'Koreano', zh: 'Tsino', es: 'Espanyol' },
+    ja: { en: '英語', fil: 'フィリピノ語', ja: '日本語', ko: '韓国語', zh: '中国語', es: 'スペイン語' },
+    ko: { en: '영어', fil: '필리핀어', ja: '일본어', ko: '한국어', zh: '중국어', es: '스페인어' },
+    zh: { en: '英语', fil: '菲律宾语', ja: '日语', ko: '韩语', zh: '中文', es: '西班牙语' },
+    es: { en: 'Ingles', fil: 'Filipino', ja: 'Japones', ko: 'Coreano', zh: 'Chino', es: 'Espanol' },
+  };
+
+  const languages = (Object.keys(languageNames[currentLang]) as Language[]).map((code) => ({
+    code,
+    label: languageNames[currentLang][code],
+  }));
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
