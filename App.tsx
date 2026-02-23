@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar.tsx';
 import Hero from './components/Hero.tsx';
@@ -93,10 +93,10 @@ const translations = {
       selectedLabel: 'Selected',
       hoverHint: 'Hover to explore',
       items: [
-        { icon: '🎵', title: 'Audio', description: 'Collection, labelling, voice categorization, music categorization, intelligent customer service solutions.' },
-        { icon: '🖼️', title: 'Image', description: 'Collection, labelling, classification, audit, object detection and tagging for computer vision applications.' },
-        { icon: '🎬', title: 'Video', description: 'Collection, labelling, audit, live broadcast analysis, subtitle generation and video content processing.' },
-        { icon: '📝', title: 'Text', description: 'Text collection, labelling, transcription, utterance collection, sentiment analysis and NLP solutions.' }
+        { icon: 'ðŸŽµ', title: 'Audio', description: 'Collection, labelling, voice categorization, music categorization, intelligent customer service solutions.' },
+        { icon: 'ðŸ–¼ï¸', title: 'Image', description: 'Collection, labelling, classification, audit, object detection and tagging for computer vision applications.' },
+        { icon: 'ðŸŽ¬', title: 'Video', description: 'Collection, labelling, audit, live broadcast analysis, subtitle generation and video content processing.' },
+        { icon: 'ðŸ“', title: 'Text', description: 'Text collection, labelling, transcription, utterance collection, sentiment analysis and NLP solutions.' }
       ]
     },
     video: {
@@ -241,122 +241,51 @@ const translations = {
     }
   },
   fil: {
-    nav: { services: 'Serbisyo', projects: 'Mga Proyekto', partners: 'Mga Kasosyo', scale: 'Global na Scale', company: 'Aming Kumpanya', careers: 'Trabaho', apply: 'Mag-apply Na' },
-    hero: { title: "Ang nangungunang provider sa mundo ng", accent: "AI-powered", subtitle: "na solusyon sa data.", contact: "Makipag-ugnayan", learn: "Matuto Pa" },
-    about: { mission: "Aming Misyon", vision: "Aming Bisyon", missionText: "Upang tumuklas ng mga bagong pamamaraan at insight na nagpapakita ng mga hindi inaasahang direksyon at posibilidad, kumokonekta sa panahon, henerasyon at teknolohiya para sa lahat.", visionText: "Isang mundo kung saan ang AI at katalinuhan ng tao ay walang putol na nagtutulungan upang lumikha ng mga dinamikong pagkakataon.", values: "Aming Core Values", principles: "Ang mga prinsipyo na gumagabay sa lahat ng aming ginagawa" },
-    services: { title: "Ano ang Inaalok Namin", subtitle: "AI Data Services", desc: "Nag-aalok ang Lifewood ng mga serbisyo ng AI at IT na nagpapahusay sa paggawa ng desisyon at nagpapabuti sa pagiging produktibo." },
-    video: { label: "Showcase ng Operasyon", title: "Pagbabago sa Kinabukasan ng Data", description: "Panoorin kung paano ang global na imprastraktura ng Lifewood at mga espesyalistang team ay nagpoproseso ng milyun-milyong data point araw-araw." },
-    scale: { title: "Global na Kakayahan", subtitle: "Paghahatid ng pinakamataas na antas ng scalability, integration, at seguridad" },
-    projects: {
-      eyebrow: "Aming Mga Gawa",
-      title: "Ano ang Ginagawa Namin",
-      description: "Mula sa pagbuo ng AI datasets sa iba't ibang wika at kapaligiran hanggang sa pagbuo ng mga platform na nagpapataas ng produktibidad, makikita mo kung paano hinuhubog ng Lifewood ang hinaharap sa pamamagitan ng inobasyon, integridad at pagtuon sa tao.",
-      items: [
-        { title: "AI Data Extraction", description: "Ginagamit namin ang AI para pabilisin at pagbutihin ang pagkuha ng data mula sa iba't ibang source tulad ng scan, larawan at archive.", image: "/AI-data-extraction.png" },
-        { title: "Machine Learning Enablement", description: "Nagbibigay kami ng flexible data solutions para suportahan ang iba't ibang machine learning models mula basic hanggang advanced.", image: "/Machine-Learning-Enablement.png" },
-        { title: "Autonomous Driving Technology", description: "Nagbibigay kami ng high-precision annotation para sa autonomous driving kabilang ang 2D at 3D mapping data.", image: "/Autonomous-Driving-Technology.png" },
-        { title: "Natural Language Processing at Speech", description: "Sinusuportahan namin ang NLP at speech projects sa maraming wika, dialect at accent para sa text at audio.", image: "/Natural-Language-Processing-and-Speech-Acquisition.png" },
-        { title: "Computer Vision (CV)", description: "Nagbibigay kami ng end-to-end CV data services mula collection hanggang annotation para sa image at video datasets.", image: "/Computer-Vision.png" },
-        { title: "Genealogy", description: "Pinapabilis namin ang pagproseso ng genealogical records para mapreserba at mapadali ang access sa mahahalagang historical data.", image: "/Genealogy.png" }
-      ]
+    nav: { projects: 'Mga Proyekto', partners: 'Mga Kasosyo' },
+    partners: {
+      eyebrow: 'Aming Mga Kliyente at Kasosyo',
+      title: 'Pinagkakatiwalaan ng mga Nangungunang Lider sa Industriya',
+      description: 'Ipinagmamalaki naming makipag-partner sa mga organisasyon sa buong mundo upang gawing makabuluhang solusyon ang data.'
     },
-    careers: { title: "KARERA SA LIFEWOOD", tag: "LAGING BUKAS HINDI TUMITIGIL", join: "SUMALI SA AMING TEAM", positions: "Mga Bakanteng Trabaho", formTitle: "Application Form", formDesc: "Fill out the form below to apply for your preferred project internship.", firstName: "First Name *", lastName: "Last Name *", age: "Age", email: "Email Address *", degree: "Degree/Field of Study", degreePlaceholder: "e.g., Computer Science, Data Science, Engineering", project: "Project Applied For *", selectProject: "Select a project", experience: "Relevant Experience", experiencePlaceholder: "Describe your relevant experience, projects, skills, or coursework...", submitButton: "Submit Application", closeButton: "Close" },
-    cta: { title: "Handa nang baguhin ang iyong Data?", button: "Makipag-ugnayan Ngayon" }
+    projects: { eyebrow: 'Aming Mga Gawa', title: 'Ano ang Ginagawa Namin' }
   },
   ja: {
-    nav: { services: 'サービス', projects: 'プロジェクト', partners: 'パートナー', scale: 'グローバル規模', company: '会社概要', careers: '採用情報', apply: '今すぐ応募' },
-    hero: { title: "世界をリードする", accent: "AI駆動型", subtitle: "データソリューションプロバイダー。", contact: "お問い合わせ", learn: "詳細を見る" },
-    about: { mission: "私たちの使命", vision: "私たちのビジョン", missionText: "新しい手法と洞察を発見し、予期せぬ方向性と可能性を明らかにし、あらゆる人々のために時代、世代、技術を超えてつながること。", visionText: "AIと人間の知性がシームレスに協力し、地理的および文化的な境界を越えて動的な機会を生み出す世界。", values: "コアバリュー", principles: "私たちのすべての行動を導く原則" },
-    services: { title: "提供サービス", subtitle: "AIデータサービス", desc: "Lifewoodは、意思決定を強化し、コストを削減し、生産性を向上させて組織のパフォーマンスを最適화するAIおよびITサービスを提供します。" },
-    video: { label: "オペレーション紹介", title: "データの未来を変革する", description: "Lifewoodのグローバルなインフラストラクチャと専門チームが、毎日数百万のデータポイントを比類のない精度とスピードで処理する様子をご覧ください。" },
-    scale: { title: "グローバルな能力", subtitle: "最高レベルのスケーラビリティ、統合、およびセキュリティの提供" },
-    projects: {
-      eyebrow: "私たちの仕事",
-      title: "私たちの取り組み",
-      description: "多様な言語と環境でAIデータセットを構築し、生産性を高めるプラットフォームを開発することで、Lifewoodがイノベーションと誠実さ、人間中心の姿勢で未来を形づくる様子をご覧いただけます。",
-      items: [
-        { title: "AIデータ抽出", description: "AIを活用して、画像やテキストを複数ソースから効率的かつ高品質に取得します。", image: "/AI-data-extraction.png" },
-        { title: "機械学習の実装支援", description: "基礎データから高度な学習まで、幅広い機械学習モデルに対応する柔軟なデータ基盤を提供します。", image: "/Machine-Learning-Enablement.png" },
-        { title: "自動運転技術", description: "2D/3Dデータを含む高精度なアノテーションにより、安全な自動運転システム開発を支援します。", image: "/Autonomous-Driving-Technology.png" },
-        { title: "自然言語処理と音声収集", description: "多言語・方言・アクセント対応の音声/テキストデータ収集と転記でNLP開発を支援します。", image: "/Natural-Language-Processing-and-Speech-Acquisition.png" },
-        { title: "コンピュータビジョン（CV）", description: "画像・動画向けに、収集からアノテーション、分類まで一貫したCVデータサービスを提供します。", image: "/Computer-Vision.png" },
-        { title: "系譜データ", description: "系譜資料のデジタル化と処理を高速化し、歴史的記録の保存と活用を支援します。", image: "/Genealogy.png" }
-      ]
+    nav: { projects: 'プロジェクト', partners: 'パートナー' },
+    partners: {
+      eyebrow: 'クライアントとパートナー',
+      title: '業界をリードする企業からの信頼',
+      description: 'Lifewoodは世界中の主要組織と連携し、データを価値あるソリューションへと変革しています。'
     },
-    careers: { title: "採用情報", tag: "常に進化し続ける", join: "チームに参加する", positions: "募集職種", formTitle: "Application Form", formDesc: "Fill out the form below to apply for your preferred project internship.", firstName: "First Name *", lastName: "Last Name *", age: "Age", email: "Email Address *", degree: "Degree/Field of Study", degreePlaceholder: "e.g., Computer Science, Data Science, Engineering", project: "Project Applied For *", selectProject: "Select a project", experience: "Relevant Experience", experiencePlaceholder: "Describe your relevant experience, projects, skills, or coursework...", submitButton: "Submit Application", closeButton: "Close" },
-    cta: { title: "データの変革を始めませんか？", button: "今すぐお問い合わせ" }
+    projects: { eyebrow: '私たちの仕事', title: '私たちの取り組み' }
   },
   ko: {
-    nav: { services: '서비스', projects: '프로젝트', partners: '파트너', scale: '글로벌 스케일', company: '회사 소개', careers: '채용', apply: '지금 지원하기' },
-    hero: { title: "세계 최고의", accent: "AI 기반", subtitle: "데이터 솔루션 제공업체.", contact: "문의하기", learn: "더 알아보기" },
-    about: { mission: "우리의 사명", vision: "우리의 비전", missionText: "새로운 방법과 통찰력을 발견하여 예상치 못한 방향과 가능성을 드러내고, 시간과 세대, 기술을 초월하여 모든 사람을 연결합니다.", visionText: "AI와 인간의 지능이 원활하게 협력하여 지리적, 문화적 경계를 초월하고 역동적인 기회를 창출하는 세상.", values: "핵심 가치", principles: "우리의 모든 활동을 이끄는 원칙" },
-    services: { title: "제공 서비스", subtitle: "AI 데이터 서비스", desc: "Lifewood는 의사 결정을 강화하고 비용을 절감하며 생산성을 향상시켜 조직 성과를 최적화하는 AI 및 IT 서비스를 제공합니다." },
-    video: { label: "운영 쇼케이스", title: "데이터의 미래를 혁신하다", description: "Lifewood의 글로벌 인프라와 전문 팀이 타의 추종을 불허하는 정확도와 속도로 매일 수백만 개의 데이터 포인트를 처리하는 방법을 확인하세요." },
-    scale: { title: "글로벌 역량", subtitle: "최고 수준의 확장성, 통합 및 보안 제공" },
-    projects: {
-      eyebrow: "우리의 작업",
-      title: "우리가 하는 일",
-      description: "다양한 언어와 환경에서 AI 데이터셋을 구축하고 생산성을 높이는 플랫폼을 개발하며, Lifewood가 혁신과 진정성, 사람 중심 가치로 미래를 만들어가는 방식을 확인할 수 있습니다.",
-      items: [
-        { title: "AI 데이터 추출", description: "AI를 활용해 이미지와 텍스트를 다양한 소스에서 빠르고 정확하게 수집합니다.", image: "/AI-data-extraction.png" },
-        { title: "머신러닝 구현 지원", description: "기초 데이터부터 고급 모델까지 다양한 머신러닝 시스템에 맞는 유연한 데이터 솔루션을 제공합니다.", image: "/Machine-Learning-Enablement.png" },
-        { title: "자율주행 기술", description: "2D/3D를 포함한 정밀 라벨링과 매핑 데이터로 자율주행 시스템 개발을 지원합니다.", image: "/Autonomous-Driving-Technology.png" },
-        { title: "자연어 처리 및 음성 수집", description: "다국어·방언·억양 데이터를 기반으로 NLP 및 음성 AI 프로젝트를 지원합니다.", image: "/Natural-Language-Processing-and-Speech-Acquisition.png" },
-        { title: "컴퓨터 비전(CV)", description: "이미지와 영상 데이터에 대해 수집부터 주석, 분류까지 CV 전 과정을 제공합니다.", image: "/Computer-Vision.png" },
-        { title: "족보 데이터", description: "족보 자료를 대규모로 디지털화·처리하여 기록 보존과 활용성을 높입니다.", image: "/Genealogy.png" }
-      ]
+    nav: { projects: '프로젝트', partners: '파트너' },
+    partners: {
+      eyebrow: '고객 및 파트너',
+      title: '업계 리더들이 신뢰하는 Lifewood',
+      description: 'Lifewood는 전 세계 선도 조직과 협력하여 데이터를 의미 있는 솔루션으로 전환합니다.'
     },
-    careers: { title: "채용 정보", tag: "멈추지 않는 혁신", join: "팀에 합류하세요", positions: "현재 모집 중인 직무", formTitle: "Application Form", formDesc: "Fill out the form below to apply for your preferred project internship.", firstName: "First Name *", lastName: "Last Name *", age: "Age", email: "Email Address *", degree: "Degree/Field of Study", degreePlaceholder: "e.g., Computer Science, Data Science, Engineering", project: "Project Applied For *", selectProject: "Select a project", experience: "Relevant Experience", experiencePlaceholder: "Describe your relevant experience, projects, skills, or coursework...", submitButton: "Submit Application", closeButton: "Close" },
-    cta: { title: "데이터 혁신을 준비하셨나요?", button: "지금 문의하기" }
+    projects: { eyebrow: '우리의 작업', title: '우리가 하는 일' }
   },
   zh: {
-    nav: { services: '服务', projects: '项目', partners: '合作伙伴', scale: '全球规模', company: '关于我们', careers: '职业生涯', apply: '立即申请' },
-    hero: { title: "全球领先的", accent: "人工智能驱动", subtitle: "数据解决方案提供商。", contact: "联系我们", learn: "了解更多" },
-    about: { mission: "我们的使命", vision: "我们的愿景", missionText: "发掘新的方法 and 见解，揭示意想不到的方向和可能性，跨越时代、世代和技术为每个人建立联系。", visionText: "人工智能与人类智慧无缝协作，创造充满活力的机遇和繁荣的社区，超越地理和文化界限。", values: "核心价值观", principles: "指导我们一切行动的原则" },
-    services: { title: "我们提供的服务", subtitle: "AI数据服务", desc: "Lifewood 提供人工智能和 IT 服务，旨在增强决策能力、降低成本并提高生产力。" },
-    video: { label: "运营展示", title: "转型数据的未来", description: "观看 Lifewood 的全球基础设施和专业团队如何以无与伦比的精度和速度处理每天数百万个数据点。" },
-    scale: { title: "全球能力", subtitle: "提供最高水平的可扩展性、集成和安全性" },
-    projects: {
-      eyebrow: "我们的工作",
-      title: "我们的工作内容",
-      description: "从在不同语言与场景中构建 AI 数据集，到开发提升生产力的平台，您将看到 Lifewood 如何以创新、诚信和以人为本的方式塑造未来。",
-      items: [
-        { title: "AI 数据提取", description: "我们使用 AI 从多种来源高效提取图像与文本数据。", image: "/AI-data-extraction.png" },
-        { title: "机器学习赋能", description: "我们提供灵活的数据方案，支持从基础到复杂的各类机器学习模型。", image: "/Machine-Learning-Enablement.png" },
-        { title: "自动驾驶技术", description: "通过高精度标注与 2D/3D 数据处理，支持自动驾驶系统落地。", image: "/Autonomous-Driving-Technology.png" },
-        { title: "自然语言处理与语音采集", description: "我们支持多语言、方言和口音的数据采集与转写，助力 NLP 与语音项目。", image: "/Natural-Language-Processing-and-Speech-Acquisition.png" },
-        { title: "计算机视觉（CV）", description: "从数据采集到标注与分类，我们提供完整的计算机视觉数据服务。", image: "/Computer-Vision.png" },
-        { title: "家谱数据", description: "我们规模化处理家谱资料，帮助历史档案实现数字化与可用化。", image: "/Genealogy.png" }
-      ]
+    nav: { projects: '项目', partners: '合作伙伴' },
+    partners: {
+      eyebrow: '我们的客户与合作伙伴',
+      title: '深受行业领导者信赖',
+      description: '我们很荣幸与全球领先组织合作，将数据转化为有价值的解决方案。'
     },
-    careers: { title: "职业发展", tag: "创新永不止步", join: "加入我们的团队", positions: "开放职位", formTitle: "Application Form", formDesc: "Fill out the form below to apply for your preferred project internship.", firstName: "First Name *", lastName: "Last Name *", age: "Age", email: "Email Address *", degree: "Degree/Field of Study", degreePlaceholder: "e.g., Computer Science, Data Science, Engineering", project: "Project Applied For *", selectProject: "Select a project", experience: "Relevant Experience", experiencePlaceholder: "Describe your relevant experience, projects, skills, or coursework...", submitButton: "Submit Application", closeButton: "Close" },
-    cta: { title: "准备好转型您的数据了吗？", button: "立即联系我们" }
+    projects: { eyebrow: '我们的工作', title: '我们的工作内容' }
   },
   es: {
-    nav: { services: 'Servicios', projects: 'Proyectos', partners: 'Socios', scale: 'Escala Global', company: 'Nuestra Empresa', careers: 'Carreras', apply: 'Postularse' },
-    hero: { title: "El proveedor líder mundial de", accent: "soluciones de datos", subtitle: "impulsadas por IA.", contact: "Contáctenos", learn: "Saber Más" },
-    about: { mission: "Nuestra Misión", vision: "Nuestra Bisón", missionText: "Descubrir nuevos métodos y conocimientos que revelen direcciones y posibilidades inesperadas, conectando a través del tiempo, las generaciones y las tecnologías.", visionText: "Un mundo donde la IA y la inteligencia humana colaboran a la perfección para crear oportunidades dinámicas y comunidades prósperas.", values: "Valores Fundamentales", principles: "Los principios que guían todo lo que hacemos" },
-    services: { title: "Lo Que Ofrecemos", subtitle: "Servicios de Datos de IA", desc: "Lifewood ofrece servicios de IA e IT que mejoran la toma de decisiones, reducen costos y mejoran la productividad." },
-    video: { label: "Escaparate de Operaciones", title: "Transformando el Futuro de los Datos", description: "Vea cómo la infraestructura global de Lifewood y sus equipos especializados procesan millones de puntos de datos diariamente." },
-    scale: { title: "Capacidades Globales", subtitle: "Entregando los más altos niveles de escalabilidad, integration, y seguridad" },
-    projects: {
-      eyebrow: "Nuestro Trabajo",
-      title: "Que Hacemos",
-      description: "Desde construir conjuntos de datos de IA en diversos idiomas y entornos hasta desarrollar plataformas que mejoran la productividad, veras como Lifewood esta dando forma al futuro con innovacion, integridad y enfoque en las personas.",
-      items: [
-        { title: "Extraccion de Datos con IA", description: "Usamos IA para optimizar la captura de imagenes y texto desde multiples fuentes.", image: "/AI-data-extraction.png" },
-        { title: "Habilitacion de Machine Learning", description: "Ofrecemos soluciones de datos flexibles para distintos sistemas y modelos de aprendizaje automatico.", image: "/Machine-Learning-Enablement.png" },
-        { title: "Tecnologia de Conduccion Autonoma", description: "Con etiquetado de alta precision y datos 2D/3D, ayudamos a llevar la conduccion autonoma a escenarios reales.", image: "/Autonomous-Driving-Technology.png" },
-        { title: "Procesamiento de Lenguaje y Voz", description: "Apoyamos proyectos NLP con recoleccion y transcripcion de audio y texto en multiples idiomas y acentos.", image: "/Natural-Language-Processing-and-Speech-Acquisition.png" },
-        { title: "Vision por Computadora (CV)", description: "Brindamos servicios integrales de datos para CV: recoleccion, anotacion y clasificacion.", image: "/Computer-Vision.png" },
-        { title: "Genealogia", description: "Procesamos grandes volumenes de material genealogico para preservar y hacer util la informacion historica.", image: "/Genealogy.png" }
-      ]
+    nav: { projects: 'Proyectos', partners: 'Socios' },
+    partners: {
+      eyebrow: 'Nuestros Clientes y Socios',
+      title: 'Con la Confianza de Lideres de la Industria',
+      description: 'Nos enorgullece colaborar con organizaciones lideres para transformar datos en soluciones con impacto.'
     },
-    careers: { title: "CARRERAS EN LIFEWOOD", tag: "SIEMPRE ACTIVOS, NUNCA APAGADOS", join: "ÚNETE A NUESTRO EQUIPO", positions: "Posiciones Abiertas", formTitle: "Application Form", formDesc: "Fill out the form below to apply for your preferred project internship.", firstName: "First Name *", lastName: "Last Name *", age: "Age", email: "Email Address *", degree: "Degree/Field of Study", degreePlaceholder: "e.g., Computer Science, Data Science, Engineering", project: "Project Applied For *", selectProject: "Select a project", experience: "Relevant Experience", experiencePlaceholder: "Describe your relevant experience, projects, skills, or coursework...", submitButton: "Submit Application", closeButton: "Close" },
-    cta: { title: "¿Listo para transformar sus datos?", button: "Contáctenos Hoy" }
+    projects: { eyebrow: 'Nuestro Trabajo', title: 'Que Hacemos' }
   }
 };
-
 const deepMerge = (base: any, override: any): any => {
   if (Array.isArray(base) || Array.isArray(override)) {
     return override ?? base;
@@ -431,3 +360,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+
