@@ -93,10 +93,10 @@ const translations = {
       selectedLabel: 'Selected',
       hoverHint: 'Hover to explore',
       items: [
-        { icon: 'ðŸŽµ', title: 'Audio', description: 'Collection, labelling, voice categorization, music categorization, intelligent customer service solutions.' },
-        { icon: 'ðŸ–¼ï¸', title: 'Image', description: 'Collection, labelling, classification, audit, object detection and tagging for computer vision applications.' },
-        { icon: 'ðŸŽ¬', title: 'Video', description: 'Collection, labelling, audit, live broadcast analysis, subtitle generation and video content processing.' },
-        { icon: 'ðŸ“', title: 'Text', description: 'Text collection, labelling, transcription, utterance collection, sentiment analysis and NLP solutions.' }
+        { icon: '🎵', title: 'Audio', description: 'Collection, labelling, voice categorization, music categorization, intelligent customer service solutions.' },
+        { icon: '🖼️', title: 'Image', description: 'Collection, labelling, classification, audit, object detection and tagging for computer vision applications.' },
+        { icon: '🎬', title: 'Video', description: 'Collection, labelling, audit, live broadcast analysis, subtitle generation and video content processing.' },
+        { icon: '📝', title: 'Text', description: 'Text collection, labelling, transcription, utterance collection, sentiment analysis and NLP solutions.' }
       ]
     },
     video: {
