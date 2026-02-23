@@ -42,22 +42,22 @@ const Footer: React.FC<FooterProps> = ({ t }) => {
             </div>
             <p className="text-lifewood-seaSalt/60 leading-relaxed text-sm">{t.brandDescription}</p>
             <div className="flex space-x-3">
-              <a href="#" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="LinkedIn">
+              <a href="https://linkedin.com/company/lifewood-data-technology-ltd./" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="LinkedIn">
                 <svg className="w-4 h-4 text-lifewood-seaSalt group-hover:text-lifewood-dark transition-colors" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="Facebook">
+              <a href="https://www.facebook.com/LifewoodPH" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="Facebook">
                 <svg className="w-4 h-4 text-lifewood-seaSalt group-hover:text-lifewood-dark transition-colors" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="YouTube">
+              <a href="https://www.youtube.com/@LifewoodDataTechnology" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="YouTube">
                 <svg className="w-4 h-4 text-lifewood-seaSalt group-hover:text-lifewood-dark transition-colors" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M23.499 6.203a2.995 2.995 0 00-2.104-2.116C19.559 3.5 12 3.5 12 3.5s-7.559 0-9.395.587A2.995 2.995 0 000 6.203C0 8.037 0 12 0 12s0 3.963.605 5.797a2.995 2.995 0 002.104 2.116C4.441 20.5 12 20.5 12 20.5s7.559 0 9.395-.587a2.995 2.995 0 002.104-2.116C24 15.963 24 12 24 12s0-3.963-.501-5.797zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" />
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="Instagram">
+              <a href="https://www.instagram.com/lifewood_official/?hl=af" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-lifewood-white/10 rounded-full flex items-center justify-center hover:bg-lifewood-saffron transition-all group" aria-label="Instagram">
                 <svg className="w-4 h-4 text-lifewood-seaSalt group-hover:text-lifewood-dark transition-colors" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.117.63c-.786.297-1.449.645-2.088 1.284-.44.44-.856 1.076-1.084 1.886-.297.788-.398 1.657-.456 2.907-.059 1.271-.074 1.644-.074 4.848s.015 3.577.072 4.857c.06 1.271.261 2.148.558 2.913.306.788.645 1.451 1.284 2.088.44.44 1.079.857 1.887 1.085.766.296 1.636.499 2.913.558 1.271.06 1.645.074 4.848.074s3.577-.015 4.856-.072c1.271-.06 2.148-.262 2.913-.559.786-.306 1.45-.645 2.088-1.284.44-.44.856-1.079 1.084-1.886.297-.765.499-1.636.558-2.913.06-1.271.074-1.645.074-4.848s-.015-3.577-.072-4.857c-.06-1.271-.262-2.148-.559-2.913-.306-.786-.645-1.45-1.284-2.088-.44-.44-1.079-.856-1.886-1.084-.765-.297-1.636-.499-2.913-.558C15.577.035 15.203.001 12 0zm0 2.16c3.203 0 3.585.009 4.849.07 1.171.06 1.805.262 2.227.437.562.217.96.477 1.382.896.419.42.679.819.896 1.381.175.422.378 1.056.437 2.228.06 1.263.07 1.646.07 4.848s-.01 3.585-.07 4.849c-.06 1.171-.262 1.805-.436 2.226-.217.561-.477.96-.896 1.382-.42.419-.824.679-1.38.896-.423.175-1.057.378-2.228.437-1.263.06-1.649.07-4.848.07-3.199 0-3.586-.01-4.849-.07-1.172-.06-1.806-.262-2.228-.436-.56-.217-.96-.477-1.382-.897-.419-.419-.679-.823-.896-1.379-.175-.423-.378-1.057-.437-2.228-.06-1.264-.07-1.647-.07-4.849s.01-3.585.07-4.849c.06-1.172.262-1.806.436-2.227.217-.561.477-.96.897-1.382.419-.419.823-.679 1.379-.896.423-.175 1.057-.378 2.228-.437 1.264-.06 1.647-.07 4.849-.07z" />
                   <circle cx="12" cy="12" r="3.305" />
