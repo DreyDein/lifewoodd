@@ -30,7 +30,7 @@ const AIConsultant: React.FC<AIConsultantProps> = ({ t }) => {
     try {
       // Initialize inside the function to ensure the most up-to-date API key is used
       // and to avoid issues with early script execution.
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY });
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
