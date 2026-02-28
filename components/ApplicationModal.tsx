@@ -161,10 +161,27 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
 
                 {/* ✅ CV / Resume Upload */}
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">
-                    CV / Resume
-                    <span className="ml-1 text-xs font-normal text-lifewood-dark/40 dark:text-lifewood-seaSalt/40">(PDF, DOC, DOCX — Max 5MB)</span>
-                  </label>
+                 <label className="text-sm font-bold ...">
+                      {t.cvLabel}
+                      <span className="ml-1 text-xs font-normal text-lifewood-dark/40 dark:text-lifewood-seaSalt/40">
+                        ({t.cvHelper})
+                      </span>
+                    </label>
+                    ...
+                    <p className="text-sm font-semibold text-lifewood-dark/60 dark:text-lifewood-seaSalt/60">
+                      {t.cvDrag}
+                    </p>
+                    <p className="text-xs text-lifewood-dark/40 dark:text-lifewood-seaSalt/40 mt-0.5">
+                      or <span className="text-lifewood-green font-bold">{t.cvBrowse}</span>
+                    </p>
+                    ...
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setCvFile(null); }}
+                      className="mt-1.5 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
+                    >
+                      {t.cvRemove}
+                    </button>
 
                   <div
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -208,16 +225,16 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                           onClick={(e) => { e.stopPropagation(); setCvFile(null); }}
                           className="mt-1.5 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
                         >
-                          Remove file
+                          {t.cvRemove}
                         </button>
                       </>
                     ) : (
                       <>
                         <p className="text-sm font-semibold text-lifewood-dark/60 dark:text-lifewood-seaSalt/60">
-                          Drag & drop your CV here
+                          {t.cvDrag}
                         </p>
                         <p className="text-xs text-lifewood-dark/40 dark:text-lifewood-seaSalt/40 mt-0.5">
-                          or <span className="text-lifewood-green font-bold">click to browse</span>
+                          or <span className="text-lifewood-green font-bold">{t.cvBrowse}</span>
                         </p>
                       </>
                     )}
