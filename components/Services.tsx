@@ -5,10 +5,10 @@ interface ServicesProps {
 }
 
 const fanConfig = [
-  { rotate: -25, translateX: -150, translateY: -20 },
-  { rotate: -8, translateX: -50, translateY: -40 },
-  { rotate: 8, translateX: 50, translateY: -40 },
-  { rotate: 25, translateX: 150, translateY: -20 },
+  { rotate: -20, translateX: -90,  translateY: -20 },
+  { rotate:  -7, translateX: -30,  translateY: -35 },
+  { rotate:   7, translateX:  30,  translateY: -35 },
+  { rotate:  20, translateX:  90,  translateY: -20 },
 ];
 
 const Services: React.FC<ServicesProps> = ({ t }) => {
@@ -29,12 +29,13 @@ const Services: React.FC<ServicesProps> = ({ t }) => {
           <p className="max-w-3xl mx-auto text-lifewood-dark/60 dark:text-lifewood-seaSalt/60 text-lg">{t.desc}</p>
         </div>
 
-        <div
-          className="relative flex justify-center items-end mx-auto"
-          style={{ height: '340px', width: '100%', maxWidth: '900px' }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
+        {/* Single Folder Container */}
+            <div
+              className="relative flex justify-center items-end mx-auto"
+              style={{ height: '320px', width: '100%', maxWidth: '900px' }}
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+            >
           <div
             className="absolute bottom-0 rounded-t-3xl rounded-b-xl bg-lifewood-green dark:bg-lifewood-saffron shadow-2xl"
             style={{
@@ -68,11 +69,11 @@ const Services: React.FC<ServicesProps> = ({ t }) => {
                 onClick={() => handleCardClick(idx)}
                 className="absolute bg-lifewood-white dark:bg-lifewood-dark/90 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center"
                 style={{
-                  width: '180px',
-                  height: '190px',
-                  bottom: '60px',
-                  left: '50%',
-                  marginLeft: '-100px',
+                    width: '140px',     
+                    height: '170px',      
+                    bottom: '60px',
+                    left: '50%',
+                    marginLeft: '-70px', 
                   zIndex: isSelected ? 20 : 10 + idx,
                   cursor: hovered ? 'pointer' : 'default',
                   transition: `transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 40}ms, box-shadow 0.3s ease`,
@@ -158,7 +159,7 @@ const Services: React.FC<ServicesProps> = ({ t }) => {
 
               <p className="text-lg text-lifewood-dark/70 dark:text-lifewood-seaSalt/80 leading-relaxed">{serviceItems[selected].description}</p>
 
-              <div className="flex gap-3 mt-8">
+              <div className="flex flex-wrap gap-2 mt-8">
                 {serviceItems.map((s: any, i: number) => (
                   <button
                     key={i}
