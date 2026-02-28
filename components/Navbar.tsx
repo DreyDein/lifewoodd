@@ -169,9 +169,13 @@ const Navbar: React.FC<NavbarProps> = ({ onApplyClick, currentLang, onLangChange
           {/* ✅ Hamburger — always on top */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 focus:outline-none text-lifewood-white"
-            style={{ zIndex: 300 }}
-          >
+            className={`lg:hidden p-2 focus:outline-none transition-colors duration-300 ${
+                scrolled
+                  ? 'text-lifewood-green'        // ✅ green when scrolled in light mode
+                  : 'text-lifewood-white'        // ✅ white when at top (over hero)
+              } dark:text-lifewood-white`}
+              style={{ zIndex: 300 }}
+            >
             {isMenuOpen ? (
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
