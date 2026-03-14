@@ -8,17 +8,49 @@ interface ContactModalProps {
 
 const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, t }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submitLabel = isSubmitting ? (t?.submitting ?? 'Sending...') : t.send;
+  const errorLabel = t?.submitError ?? 'Submission failed. Please try again.';
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     setSubmitted(false);
+    setError(null);
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (isSubmitting) return;
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Submission failed.');
+      }
+
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Submission failed.';
+      setError(message || errorLabel);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -40,16 +72,24 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, t }) => {
           </div>
         )}
 
+        {error && (
+          <div className="mb-5 rounded-xl border border-red-400/40 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-500">
+            {error || errorLabel}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <input
               type="text"
+              name="fullName"
               required
               placeholder={t.fullName}
               className="w-full rounded-2xl border border-lifewood-paper bg-lifewood-white px-5 py-4 text-lifewood-dark placeholder:text-lifewood-dark/45 focus:outline-none focus:ring-2 focus:ring-lifewood-green dark:border-lifewood-paper/25 dark:bg-lifewood-dark/80 dark:text-lifewood-seaSalt dark:placeholder:text-lifewood-seaSalt/50"
             />
             <input
               type="email"
+              name="email"
               required
               placeholder={t.email}
               className="w-full rounded-2xl border border-lifewood-paper bg-lifewood-white px-5 py-4 text-lifewood-dark placeholder:text-lifewood-dark/45 focus:outline-none focus:ring-2 focus:ring-lifewood-green dark:border-lifewood-paper/25 dark:bg-lifewood-dark/80 dark:text-lifewood-seaSalt dark:placeholder:text-lifewood-seaSalt/50"
@@ -59,6 +99,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, t }) => {
           <select
             required
             defaultValue=""
+            name="inquiryType"
             className="w-full rounded-2xl border border-lifewood-paper bg-lifewood-white px-5 py-4 text-lifewood-dark focus:outline-none focus:ring-2 focus:ring-lifewood-green dark:border-lifewood-paper/25 dark:bg-lifewood-dark/80 dark:text-lifewood-seaSalt"
           >
             <option value="" disabled>
@@ -72,15 +113,17 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, t }) => {
           <textarea
             required
             rows={5}
+            name="message"
             placeholder={t.message}
             className="w-full resize-none rounded-2xl border border-lifewood-paper bg-lifewood-white px-5 py-4 text-lifewood-dark placeholder:text-lifewood-dark/45 focus:outline-none focus:ring-2 focus:ring-lifewood-green dark:border-lifewood-paper/25 dark:bg-lifewood-dark/80 dark:text-lifewood-seaSalt dark:placeholder:text-lifewood-seaSalt/50"
           />
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full rounded-2xl bg-lifewood-green py-4 text-2xl font-extrabold text-lifewood-white shadow-[0_18px_35px_rgba(4,98,65,0.25)] transition hover:brightness-110 active:scale-[0.99]"
           >
-            {t.send}
+            {submitLabel}
           </button>
         </form>
       </div>

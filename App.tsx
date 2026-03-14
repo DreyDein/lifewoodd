@@ -15,6 +15,7 @@ import Footer from './components/Footer.tsx';
 import AIConsultant from './components/AIConsultant.tsx';
 import ApplicationModal from './components/ApplicationModal.tsx';
 import ContactModal from './components/ContactModal.tsx';
+import AdminPage from './components/AdminPage.tsx';
 import { Language, Theme } from './types.ts';
 import ClickSpark from './components/ClickSpark';
 
@@ -439,6 +440,7 @@ const deepMerge = (base: any, override: any): any => {
 const App: React.FC = () => {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isAdminRoute, setIsAdminRoute] = useState(() => window.location.pathname === '/admin');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('lifewood-lang') as Language) || 'en');
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('lifewood-theme') as Theme) || 'light');
 
@@ -457,11 +459,23 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setIsAdminRoute(window.location.pathname === '/admin');
+    };
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
   const openApplyModal = () => setIsApplyModalOpen(true);
   const closeApplyModal = () => setIsApplyModalOpen(false);
   const openContactModal = () => setIsContactModalOpen(true);
   const closeContactModal = () => setIsContactModalOpen(false);
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
+  if (isAdminRoute) {
+    return <AdminPage />;
+  }
 
   return (
     <ClickSpark>

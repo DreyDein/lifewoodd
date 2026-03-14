@@ -10,18 +10,52 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
   const [submitted, setSubmitted] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submitLabel = isSubmitting ? (t?.submitting ?? 'Submitting...') : t.submitButton;
+  const errorLabel = t?.submitError ?? 'Submission failed. Please try again.';
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     setSubmitted(false);
     setCvFile(null);
+    setError(null);
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (isSubmitting) return;
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      if (cvFile) {
+        formData.set('cv', cvFile);
+      }
+
+      const response = await fetch('/api/apply', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Submission failed.');
+      }
+
+      setSubmitted(true);
+      form.reset();
+      setCvFile(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Submission failed.';
+      setError(message || errorLabel);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +107,13 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
               </div>
             )}
 
-            <form className="space-y-2.5" onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-400/40 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-500">
+                {error || errorLabel}
+              </div>
+            )}
+
+            <form className="space-y-2.5" onSubmit={handleSubmit} encType="multipart/form-data">
               <div className="pr-4 pb-6 space-y-2.5">
 
                 {/* First + Last Name */}
@@ -82,6 +122,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.firstName}</label>
                     <input
                       type="text"
+                      name="firstName"
                       required
                       className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
@@ -90,6 +131,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.lastName}</label>
                     <input
                       type="text"
+                      name="lastName"
                       required
                       className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
@@ -102,6 +144,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.age}</label>
                     <input
                       type="number"
+                      name="age"
                       inputMode="numeric"
                       min={0}
                       max={99}
@@ -117,6 +160,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                     <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.email}</label>
                     <input
                       type="email"
+                      name="email"
                       required
                       className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                     />
@@ -128,6 +172,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.degree}</label>
                   <input
                     type="text"
+                    name="degree"
                     placeholder={t.degreePlaceholder}
                     className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
                   />
@@ -137,6 +182,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.project}</label>
                   <select
+                    name="project"
                     required
                     className="w-full px-3 py-2 bg-lifewood-seaSalt text-lifewood-dark border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none appearance-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt"
                   >
@@ -153,6 +199,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-lifewood-dark dark:text-lifewood-seaSalt">{t.experience}</label>
                   <textarea
+                    name="experience"
                     rows={3}
                     placeholder={t.experiencePlaceholder}
                     className="w-full px-3 py-2 bg-lifewood-seaSalt border border-lifewood-paper rounded-lg focus:ring-2 focus:ring-lifewood-green outline-none resize-none dark:bg-lifewood-dark/80 dark:border-lifewood-paper/25 dark:text-lifewood-seaSalt placeholder:text-lifewood-dark/40 dark:placeholder:text-lifewood-seaSalt/50"
@@ -244,6 +291,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   <input
                     id="cv-upload"
                     type="file"
+                    name="cv"
                     accept=".pdf,.doc,.docx"
                     onChange={handleFileChange}
                     className="hidden"
@@ -254,9 +302,10 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="flex-1 py-2 bg-lifewood-green text-lifewood-white font-bold rounded-lg transform transition duration-150 ease-in-out hover:-translate-y-0.5 active:scale-95 shadow-lg"
                   >
-                    {t.submitButton}
+                    {submitLabel}
                   </button>
                   <button
                     type="button"
