@@ -4,11 +4,13 @@ interface PartnersProps {
 }
 
 const partners = [
-  { name: 'Google', src: '/google-logo.png', className: 'h-8 md:h-10' },
-  { name: 'Meta', src: '/meta-logo.png', className: 'h-10 md:h-12' },
-  { name: 'Amazon', src: '/amazon-logo.png', className: 'h-8 md:h-10 dark:invert dark:brightness-200' },
+  { name: 'Ancestry', src: '/ancestry-logo.png', className: 'h-8 md:h-10' },
+  { name: 'FamilySearch', src: '/familysearch-logo.png', className: 'h-8 md:h-10' },
+  { name: 'Microsoft', src: '/microsoft-logo.png', className: 'h-8 md:h-10' },
   { name: 'Apple', src: '/apple-logo.png', className: 'h-10 md:h-12 dark:invert dark:brightness-200' },
-  { name: 'NVIDIA', src: '/nvidia-logo.png', className: 'h-10 md:h-12' }
+  { name: 'Google', src: '/google-logo.png', className: 'h-8 md:h-10' },
+  { name: 'Moore Foundation', src: '/moore-foundation-logo.jpg', className: 'h-8 md:h-10' },
+  { name: 'BYU Pathway', src: '/byu-pathway-logo.png', className: 'h-8 md:h-10' },
 ];
 
 // Duplicate the list so the loop feels seamless
@@ -37,7 +39,7 @@ const Partners: React.FC<PartnersProps> = ({ t }) => {
           <div
             className="flex gap-10 w-max"
             style={{
-              animation: 'marquee 25s linear infinite',
+              animation: 'marquee 30s linear infinite',
             }}
           >
             {loopedPartners.map((partner, idx) => (
