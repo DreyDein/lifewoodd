@@ -43,7 +43,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setError('');
     setLoading(true);
     try {
-      const data = await apiFetch('/api/admin/login', {
+      const data = await apiFetch('/api/admin-login', {
         method: 'POST',
         body: JSON.stringify({ password }),
       });
@@ -202,7 +202,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setLoading(true);
     setError('');
     try {
-      const data = await apiFetch('/api/admin/emails');
+      const data = await apiFetch('/api/admin-emails');
       setEntries(data);
     } catch (err: any) {
       if (err.message?.includes('Unauthorized')) {
@@ -221,7 +221,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async (id: string, source: string) => {
     setDeletingId(id);
     try {
-      await apiFetch(`/api/admin/delete?source=${source}&id=${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin-delete?source=${source}&id=${id}`, { method: 'DELETE' });
       setEntries((prev) => prev.filter((e) => e.id !== id));
       setConfirmDelete(null);
     } catch {
