@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 5174);
@@ -22,14 +24,26 @@ await fs.mkdir(uploadDir, { recursive: true });
 
 app.use(express.json({ limit: '1mb' }));
 
+// ── Auth ──────────────────────────────────────────────────────────────────────
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-me';
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
 
 if (ADMIN_PASSWORD === 'change-me' || ADMIN_TOKEN_SECRET === 'change-me') {
-  console.warn('Admin auth is using default credentials. Set ADMIN_PASSWORD and ADMIN_TOKEN_SECRET.');
+  console.warn('⚠️  Admin auth is using default credentials. Set ADMIN_PASSWORD and ADMIN_TOKEN_SECRET.');
 }
 
+// ── Resend ────────────────────────────────────────────────────────────────────
+const resend = new Resend(process.env.RESEND_API_KEY);
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_KEY || ''
+);
+
+// ── Multer ────────────────────────────────────────────────────────────────────
 const allowedExtensions = new Set(['.pdf', '.doc', '.docx']);
 const upload = multer({
   dest: uploadDir,
@@ -47,6 +61,7 @@ const upload = multer({
 const sanitizeFilename = (filename) =>
   filename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
+// ── Token helpers ─────────────────────────────────────────────────────────────
 const base64UrlEncode = (value) =>
   Buffer.from(JSON.stringify(value)).toString('base64url');
 
@@ -54,10 +69,7 @@ const signToken = (payload) =>
   crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(payload).digest('base64url');
 
 const createToken = () => {
-  const payload = {
-    sub: 'admin',
-    exp: Date.now() + ADMIN_TOKEN_TTL_MS
-  };
+  const payload = { sub: 'admin', exp: Date.now() + ADMIN_TOKEN_TTL_MS };
   const body = base64UrlEncode(payload);
   return `${body}.${signToken(body)}`;
 };
@@ -76,14 +88,12 @@ const requireAdmin = (req, res, next) => {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   const payload = verifyToken(token);
-  if (!payload) {
-    res.status(401).send('Unauthorized.');
-    return;
-  }
+  if (!payload) { res.status(401).send('Unauthorized.'); return; }
   req.admin = payload;
   next();
 };
 
+// ── JSONL helpers (kept as fallback) ─────────────────────────────────────────
 const appendJsonLine = async (filePath, payload) => {
   const line = `${JSON.stringify(payload)}\n`;
   await fs.appendFile(filePath, line, 'utf8');
@@ -93,10 +103,7 @@ const readJsonLines = async (filePath) => {
   try {
     const text = await fs.readFile(filePath, 'utf8');
     if (!text.trim()) return [];
-    return text
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
+    return text.split('\n').filter(Boolean).map((line) => JSON.parse(line));
   } catch (err) {
     if (err?.code === 'ENOENT') return [];
     throw err;
@@ -105,45 +112,52 @@ const readJsonLines = async (filePath) => {
 
 const writeJsonLines = async (filePath, entries) => {
   const text = entries.map((entry) => JSON.stringify(entry)).join('\n');
-  const output = text ? `${text}\n` : '';
-  await fs.writeFile(filePath, output, 'utf8');
+  await fs.writeFile(filePath, text ? `${text}\n` : '', 'utf8');
 };
 
+// ── Admin login ───────────────────────────────────────────────────────────────
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};
-  if (!password) {
-    res.status(400).send('Password is required.');
-    return;
-  }
-  if (password !== ADMIN_PASSWORD) {
-    res.status(401).send('Invalid password.');
-    return;
-  }
+  if (!password) { res.status(400).send('Password is required.'); return; }
+  if (password !== ADMIN_PASSWORD) { res.status(401).send('Invalid password.'); return; }
   res.status(200).json({ token: createToken() });
 });
 
+// ── Admin: list all emails (from Supabase) ────────────────────────────────────
 app.get('/api/admin/emails', requireAdmin, async (req, res, next) => {
   try {
-    const applications = await readJsonLines(path.join(dataDir, 'applications.jsonl'));
-    const contacts = await readJsonLines(path.join(dataDir, 'contacts.jsonl'));
+    const { data: applications, error: appErr } = await supabase
+      .from('applications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const { data: contacts, error: conErr } = await supabase
+      .from('inquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (appErr) console.error('Supabase applications error:', appErr);
+    if (conErr) console.error('Supabase contacts error:', conErr);
 
     const combined = [
-      ...applications.map((entry) => ({
-        id: entry.id,
-        email: entry.email,
-        name: `${entry.firstName ?? ''} ${entry.lastName ?? ''}`.trim() || 'Applicant',
-        receivedAt: entry.receivedAt,
+      ...(applications || []).map((e) => ({
+        id: e.id,
+        email: e.email,
+        name: `${e.first_name ?? ''} ${e.last_name ?? ''}`.trim() || 'Applicant',
+        receivedAt: e.created_at,
         source: 'applications',
-        detail: entry.project ?? ''
+        detail: e.position ?? '',
+        data: e,
       })),
-      ...contacts.map((entry) => ({
-        id: entry.id,
-        email: entry.email,
-        name: entry.fullName ?? 'Contact',
-        receivedAt: entry.receivedAt,
+      ...(contacts || []).map((e) => ({
+        id: e.id,
+        email: e.email,
+        name: e.full_name ?? 'Contact',
+        receivedAt: e.created_at,
         source: 'contacts',
-        detail: entry.inquiryType ?? ''
-      }))
+        detail: e.inquiry_type ?? '',
+        data: e,
+      })),
     ];
 
     combined.sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
@@ -153,99 +167,187 @@ app.get('/api/admin/emails', requireAdmin, async (req, res, next) => {
   }
 });
 
+// ── Admin: delete entry ───────────────────────────────────────────────────────
 app.delete('/api/admin/emails/:source/:id', requireAdmin, async (req, res, next) => {
   try {
     const { source, id } = req.params;
-    if (!['applications', 'contacts'].includes(source)) {
-      res.status(400).send('Invalid source.');
-      return;
-    }
+    const table = source === 'applications' ? 'applications' : source === 'contacts' ? 'inquiries' : null;
+    if (!table) { res.status(400).send('Invalid source.'); return; }
 
-    const filePath = path.join(dataDir, `${source}.jsonl`);
-    const entries = await readJsonLines(filePath);
-    const filtered = entries.filter((entry) => entry.id !== id);
-    await writeJsonLines(filePath, filtered);
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) throw error;
     res.status(200).json({ ok: true });
   } catch (err) {
     next(err);
   }
 });
 
+// ── Contact form ──────────────────────────────────────────────────────────────
 app.post('/api/contact', async (req, res, next) => {
   try {
     const { fullName, email, inquiryType, message } = req.body || {};
-
     if (!fullName || !email || !inquiryType || !message) {
       res.status(400).send('Missing required fields.');
       return;
     }
 
-    const entry = {
+    // Save to Supabase
+    const { error: dbErr } = await supabase.from('inquiries').insert({
+      full_name: fullName,
+      email,
+      inquiry_type: inquiryType,
+      message,
+    });
+    if (dbErr) console.error('Supabase insert error:', dbErr);
+
+    // Send email to admin
+    if (ADMIN_EMAIL && process.env.RESEND_API_KEY) {
+      await resend.emails.send({
+        from: 'Lifewood Website <onboarding@resend.dev>',
+        to: ADMIN_EMAIL,
+        subject: `📩 New Inquiry from ${fullName}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:12px;">
+            <div style="background:#046241;padding:20px 24px;border-radius:8px 8px 0 0;margin:-24px -24px 24px;">
+              <h1 style="color:white;margin:0;font-size:20px;">New Contact Inquiry</h1>
+              <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:14px;">Lifewood Website</p>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;width:140px;">Name</td><td style="padding:8px 0;font-weight:600;color:#133020;">${fullName}</td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Email</td><td style="padding:8px 0;font-weight:600;color:#133020;"><a href="mailto:${email}" style="color:#046241;">${email}</a></td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Inquiry Type</td><td style="padding:8px 0;font-weight:600;color:#133020;">${inquiryType}</td></tr>
+            </table>
+            <div style="margin-top:16px;padding:16px;background:#f8f9fa;border-radius:8px;border-left:4px solid #046241;">
+              <p style="margin:0;color:#666;font-size:12px;margin-bottom:8px;">MESSAGE</p>
+              <p style="margin:0;color:#133020;line-height:1.6;">${message}</p>
+            </div>
+            <p style="margin-top:24px;color:#999;font-size:12px;text-align:center;">Received at ${new Date().toLocaleString()}</p>
+          </div>
+        `,
+      });
+    }
+
+    // Also save to JSONL as backup
+    await appendJsonLine(path.join(dataDir, 'contacts.jsonl'), {
       id: crypto.randomUUID(),
       receivedAt: new Date().toISOString(),
-      fullName,
-      email,
-      inquiryType,
-      message
-    };
+      fullName, email, inquiryType, message,
+    });
 
-    await appendJsonLine(path.join(dataDir, 'contacts.jsonl'), entry);
-    res.status(200).json({ ok: true, id: entry.id });
+    res.status(200).json({ ok: true });
   } catch (err) {
     next(err);
   }
 });
 
+// ── Apply form ────────────────────────────────────────────────────────────────
 app.post('/api/apply', upload.single('cv'), async (req, res, next) => {
   try {
     const { firstName, lastName, age, email, degree, project, experience } = req.body || {};
-
     if (!firstName || !lastName || !email || !project) {
       res.status(400).send('Missing required fields.');
       return;
     }
 
-    let storedFile = null;
+    let cvFilename = null;
+    let cvUrl = null;
+
     if (req.file) {
       const ext = path.extname(req.file.originalname).toLowerCase();
       const safeName = sanitizeFilename(req.file.originalname);
       const fileName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
       const targetPath = path.join(uploadDir, fileName);
       await fs.rename(req.file.path, targetPath);
-      storedFile = {
-        originalName: req.file.originalname,
-        storedName: fileName,
-        size: req.file.size,
-        extension: ext
-      };
+      cvFilename = req.file.originalname;
+
+      // Upload CV to Supabase Storage
+      try {
+        const fileBuffer = await fs.readFile(targetPath);
+        const { data: storageData, error: storageErr } = await supabase.storage
+          .from('cvs')
+          .upload(fileName, fileBuffer, {
+            contentType: ext === '.pdf' ? 'application/pdf' : 'application/msword',
+          });
+        if (storageErr) {
+          console.error('Supabase storage error:', storageErr);
+        } else {
+          const { data: urlData } = supabase.storage.from('cvs').getPublicUrl(fileName);
+          cvUrl = urlData?.publicUrl || null;
+        }
+      } catch (storageErr) {
+        console.error('CV upload error:', storageErr);
+      }
     }
 
-    const entry = {
-      id: crypto.randomUUID(),
-      receivedAt: new Date().toISOString(),
-      firstName,
-      lastName,
+    // Save to Supabase DB
+    const { error: dbErr } = await supabase.from('applications').insert({
+      first_name: firstName,
+      last_name: lastName,
       age: age || null,
       email,
       degree: degree || null,
-      project,
+      position: project,
       experience: experience || null,
-      cv: storedFile
-    };
+      cv_filename: cvFilename,
+      cv_url: cvUrl,
+    });
+    if (dbErr) console.error('Supabase insert error:', dbErr);
 
-    await appendJsonLine(path.join(dataDir, 'applications.jsonl'), entry);
-    res.status(200).json({ ok: true, id: entry.id });
+    // Send email to admin
+    if (ADMIN_EMAIL && process.env.RESEND_API_KEY) {
+      await resend.emails.send({
+        from: 'Lifewood Website <onboarding@resend.dev>',
+        to: ADMIN_EMAIL,
+        subject: `🧑‍💼 New Application from ${firstName} ${lastName}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:12px;">
+            <div style="background:#046241;padding:20px 24px;border-radius:8px 8px 0 0;margin:-24px -24px 24px;">
+              <h1 style="color:white;margin:0;font-size:20px;">New Job Application</h1>
+              <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:14px;">Lifewood Careers</p>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;width:140px;">Full Name</td><td style="padding:8px 0;font-weight:600;color:#133020;">${firstName} ${lastName}</td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Email</td><td style="padding:8px 0;font-weight:600;"><a href="mailto:${email}" style="color:#046241;">${email}</a></td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Age</td><td style="padding:8px 0;font-weight:600;color:#133020;">${age || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Degree</td><td style="padding:8px 0;font-weight:600;color:#133020;">${degree || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#666;font-size:13px;">Position</td><td style="padding:8px 0;font-weight:600;color:#133020;">${project}</td></tr>
+            </table>
+            ${experience ? `
+            <div style="margin-top:16px;padding:16px;background:#f8f9fa;border-radius:8px;border-left:4px solid #046241;">
+              <p style="margin:0;color:#666;font-size:12px;margin-bottom:8px;">EXPERIENCE</p>
+              <p style="margin:0;color:#133020;line-height:1.6;">${experience}</p>
+            </div>` : ''}
+            ${cvUrl ? `
+            <div style="margin-top:16px;">
+              <a href="${cvUrl}" style="display:inline-block;padding:10px 20px;background:#FFC370;color:#133020;font-weight:700;border-radius:8px;text-decoration:none;">📎 Download CV</a>
+            </div>` : ''}
+            <p style="margin-top:24px;color:#999;font-size:12px;text-align:center;">Received at ${new Date().toLocaleString()}</p>
+          </div>
+        `,
+      });
+    }
+
+    // JSONL backup
+    await appendJsonLine(path.join(dataDir, 'applications.jsonl'), {
+      id: crypto.randomUUID(),
+      receivedAt: new Date().toISOString(),
+      firstName, lastName, age: age || null, email,
+      degree: degree || null, project, experience: experience || null,
+      cvFilename, cvUrl,
+    });
+
+    res.status(200).json({ ok: true });
   } catch (err) {
     next(err);
   }
 });
 
+// ── Error handler ─────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   const status = err?.message?.includes('Unsupported file type') ? 400 : 500;
-  const message = status === 400 ? err.message : 'Server error.';
-  res.status(status).send(message);
+  res.status(status).send(status === 400 ? err.message : 'Server error.');
 });
 
 app.listen(PORT, () => {
-  console.log(`API server listening on http://localhost:${PORT}`);
+  console.log(`✅ API server listening on http://localhost:${PORT}`);
 });
