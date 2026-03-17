@@ -221,7 +221,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async (id: string, source: string) => {
     setDeletingId(id);
     try {
-      await apiFetch(`/api/admin/emails/${source}/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/admin/delete?source=${source}&id=${id}`, { method: 'DELETE' });
       setEntries((prev) => prev.filter((e) => e.id !== id));
       setConfirmDelete(null);
     } catch {
