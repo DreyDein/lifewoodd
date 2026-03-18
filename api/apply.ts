@@ -1,21 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 import Busboy from 'busboy';
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || ''
 );
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 const parseForm = (req: VercelRequest): Promise<{
   fields: Record<string, string>;
@@ -24,25 +27,15 @@ const parseForm = (req: VercelRequest): Promise<{
   return new Promise((resolve, reject) => {
     const fields: Record<string, string> = {};
     let file: { buffer: Buffer; filename: string; mimetype: string } | null = null;
-
     const busboy = Busboy({ headers: req.headers });
-
-    busboy.on('field', (name, value) => {
-      fields[name] = value;
-    });
-
+    busboy.on('field', (name, value) => { fields[name] = value; });
     busboy.on('file', (name, stream, info) => {
       const chunks: Buffer[] = [];
       stream.on('data', (chunk) => chunks.push(chunk));
       stream.on('end', () => {
-        file = {
-          buffer: Buffer.concat(chunks),
-          filename: info.filename,
-          mimetype: info.mimeType,
-        };
+        file = { buffer: Buffer.concat(chunks), filename: info.filename, mimetype: info.mimeType };
       });
     });
-
     busboy.on('finish', () => resolve({ fields, file }));
     busboy.on('error', reject);
     req.pipe(busboy);
@@ -54,7 +47,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { fields, file } = await parseForm(req);
-
     const { firstName, lastName, age, email, degree, project, experience } = fields;
 
     if (!firstName || !lastName || !email || !project) {
@@ -64,23 +56,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let cvFilename = null;
     let cvUrl = null;
 
-    // Upload CV to Supabase Storage
     if (file && file.buffer.length > 0) {
       const ext = file.filename.split('.').pop()?.toLowerCase() || 'pdf';
       const allowedExts = ['pdf', 'doc', 'docx'];
-      if (!allowedExts.includes(ext)) {
-        return res.status(400).send('Unsupported file type.');
-      }
+      if (!allowedExts.includes(ext)) return res.status(400).send('Unsupported file type.');
 
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       cvFilename = file.filename;
 
       const { error: storageErr } = await supabase.storage
         .from('cvs')
-        .upload(fileName, file.buffer, {
-          contentType: file.mimetype,
-          upsert: false,
-        });
+        .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
 
       if (storageErr) {
         console.error('Storage error:', storageErr);
@@ -90,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Save to Supabase DB
+    // Save to Supabase
     const { error: dbErr } = await supabase.from('applications').insert({
       first_name: firstName,
       last_name: lastName,
@@ -105,10 +91,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (dbErr) console.error('Supabase DB error:', dbErr);
 
     // Send email to admin
-    if (ADMIN_EMAIL) {
-      await resend.emails.send({
-        from: 'Lifewood Website <onboarding@resend.dev>',
-        to: ADMIN_EMAIL,
+    try {
+      await transporter.sendMail({
+        from: `"Lifewood Website" <${process.env.GMAIL_USER}>`,
+        to: process.env.ADMIN_EMAIL,
         subject: `🧑‍💼 New Application from ${firstName} ${lastName}`,
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:12px;">
@@ -136,6 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         `,
       });
+    } catch (emailErr) {
+      console.error('Email error:', emailErr);
     }
 
     return res.status(200).json({ ok: true });

@@ -1,14 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+import nodemailer from 'nodemailer';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || ''
 );
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed.');
@@ -28,10 +33,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (dbErr) console.error('Supabase insert error:', dbErr);
 
   // Send email to admin
-  if (ADMIN_EMAIL) {
-    await resend.emails.send({
-      from: 'Lifewood Website <onboarding@resend.dev>',
-      to: ADMIN_EMAIL,
+  try {
+    await transporter.sendMail({
+      from: `"Lifewood Website" <${process.env.GMAIL_USER}>`,
+      to: process.env.ADMIN_EMAIL,
       subject: `📩 New Inquiry from ${fullName}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:12px;">
@@ -52,6 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </div>
       `,
     });
+  } catch (emailErr) {
+    console.error('Email error:', emailErr);
   }
 
   return res.status(200).json({ ok: true });
