@@ -188,7 +188,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({ isOpen, onClose, t 
                   >
                     <option value="">{t.selectProject}</option>
                     {t.projectOptions?.map((option: any) => (
-                      <option key={option.value} value={option.value} className="text-lifewood-dark dark:text-lifewood-seaSalt dark:bg-lifewood-dark">
+                      <option key={option.value} value={option.label} className="text-lifewood-dark dark:text-lifewood-seaSalt dark:bg-lifewood-dark">
                         {option.label}
                       </option>
                     ))}

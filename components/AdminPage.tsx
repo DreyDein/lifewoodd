@@ -13,7 +13,6 @@ interface EmailEntry {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TOKEN_KEY = 'lifewood_admin_token';
-
 const getToken = () => localStorage.getItem(TOKEN_KEY);
 const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 const clearToken = () => localStorage.removeItem(TOKEN_KEY);
@@ -59,12 +58,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
-            style={{ backgroundColor: '#046241' }}
-          >
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ backgroundColor: '#046241' }}>
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -72,19 +67,11 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <h1 className="text-2xl font-bold text-[#133020]">Admin Portal</h1>
           <p className="text-gray-500 text-sm mt-1">Lifewood Website Dashboard</p>
         </div>
-
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-[#133020] mb-2">
-                Admin Password
-              </label>
+              <label className="block text-sm font-semibold text-[#133020] mb-2">Admin Password</label>
               <input
                 type="password"
                 value={password}
@@ -95,12 +82,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
                 style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
               />
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-              style={{ backgroundColor: '#046241' }}
-            >
+            <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50" style={{ backgroundColor: '#046241' }}>
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
@@ -111,9 +93,27 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 }
 
 // ── Detail Modal ──────────────────────────────────────────────────────────────
-function DetailModal({ entry, onClose }: { entry: EmailEntry; onClose: () => void }) {
+function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected') => void }) {
   const isApp = entry.source === 'applications';
   const d = entry.data;
+  const [responding, setResponding] = useState<'accepted' | 'rejected' | null>(null);
+  const [done, setDone] = useState<'accepted' | 'rejected' | null>(entry.data.status === 'accepted' ? 'accepted' : entry.data.status === 'rejected' ? 'rejected' : null);
+
+  const handleRespond = async (decision: 'accepted' | 'rejected') => {
+    setResponding(decision);
+    try {
+      await apiFetch('/api/admin-respond', {
+        method: 'POST',
+        body: JSON.stringify({ id: entry.id, decision, email: entry.email, name: entry.data.first_name || entry.name, position: entry.data.position || entry.detail }),
+      });
+      setDone(decision);
+      onRespond(entry.id, decision);
+    } catch {
+      alert('Failed to send response. Please try again.');
+    } finally {
+      setResponding(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -132,7 +132,7 @@ function DetailModal({ entry, onClose }: { entry: EmailEntry; onClose: () => voi
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
           {isApp ? (
             <>
               <Row label="Full Name" value={`${d.first_name || ''} ${d.last_name || ''}`.trim()} />
@@ -147,13 +147,9 @@ function DetailModal({ entry, onClose }: { entry: EmailEntry; onClose: () => voi
                 </div>
               )}
               {d.cv_url && (
-                <a
-                  href={d.cv_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white w-fit mt-2"
-                  style={{ backgroundColor: '#FFC370', color: '#133020' }}
-                >
+                <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold w-fit mt-2"
+                  style={{ backgroundColor: '#FFC370', color: '#133020' }}>
                   📎 Download CV
                 </a>
               )}
@@ -173,6 +169,35 @@ function DetailModal({ entry, onClose }: { entry: EmailEntry; onClose: () => voi
           )}
           <Row label="Received" value={new Date(entry.receivedAt).toLocaleString()} />
         </div>
+
+        {/* Accept / Reject buttons — only for applications */}
+        {isApp && (
+          <div className="px-5 pb-5 pt-3 border-t border-gray-100">
+            {done ? (
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold ${done === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                {done === 'accepted' ? '✅ Accepted — email sent to applicant' : '❌ Rejected — email sent to applicant'}
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleRespond('accepted')}
+                  disabled={!!responding}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  style={{ backgroundColor: '#046241' }}
+                >
+                  {responding === 'accepted' ? 'Sending...' : '✅ Accept'}
+                </button>
+                <button
+                  onClick={() => handleRespond('rejected')}
+                  disabled={!!responding}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 bg-red-500 hover:bg-red-600"
+                >
+                  {responding === 'rejected' ? 'Sending...' : '❌ Reject'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -205,12 +230,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       const data = await apiFetch('/api/admin-emails');
       setEntries(data);
     } catch (err: any) {
-      if (err.message?.includes('Unauthorized')) {
-        clearToken();
-        onLogout();
-      } else {
-        setError('Failed to load submissions.');
-      }
+      if (err.message?.includes('Unauthorized')) { clearToken(); onLogout(); }
+      else setError('Failed to load submissions.');
     } finally {
       setLoading(false);
     }
@@ -231,6 +252,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const handleRespond = (id: string, decision: 'accepted' | 'rejected') => {
+    setEntries((prev) =>
+      prev.map((e) => e.id === id ? { ...e, data: { ...e.data, status: decision } } : e)
+    );
+  };
+
   const filtered = entries.filter((e) => {
     const matchFilter = filter === 'all' || e.source === filter;
     const matchSearch =
@@ -249,10 +276,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <div className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: '#046241' }}
-            >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#046241' }}>
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -263,19 +287,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={load}
-              className="p-2 rounded-xl text-gray-400 hover:text-[#046241] hover:bg-gray-50 transition-colors"
-              title="Refresh"
-            >
+            <button onClick={load} className="p-2 rounded-xl text-gray-400 hover:text-[#046241] hover:bg-gray-50 transition-colors" title="Refresh">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <button
-              onClick={() => { clearToken(); onLogout(); }}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 transition-colors"
-            >
+            <button onClick={() => { clearToken(); onLogout(); }} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 transition-colors">
               Sign Out
             </button>
           </div>
@@ -301,16 +318,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
           <div className="flex gap-2">
             {(['all', 'applications', 'contacts'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${
-                  filter === f
-                    ? 'text-white shadow-sm'
-                    : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
-                }`}
-                style={filter === f ? { backgroundColor: '#046241' } : {}}
-              >
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${filter === f ? 'text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}`}
+                style={filter === f ? { backgroundColor: '#046241' } : {}}>
                 {f}
               </button>
             ))}
@@ -319,22 +329,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input
-              type="text"
-              placeholder="Search by name, email, or position..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none"
-            />
+            <input type="text" placeholder="Search by name, email, or position..." value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none" />
           </div>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
         {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -357,17 +357,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase">Email</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase hidden md:table-cell">Type</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase hidden lg:table-cell">Detail</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase hidden lg:table-cell">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase hidden lg:table-cell">Received</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => setSelected(entry)}
-                  >
+                  <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelected(entry)}>
                     <td className="px-5 py-4">
                       <p className="font-semibold text-[#133020] text-sm">{entry.name}</p>
                     </td>
@@ -375,14 +372,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <p className="text-sm text-gray-500">{entry.email}</p>
                     </td>
                     <td className="px-5 py-4 hidden md:table-cell">
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-bold"
-                        style={
-                          entry.source === 'applications'
-                            ? { backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }
-                            : { backgroundColor: 'rgba(255,195,112,0.2)', color: '#b07800' }
-                        }
-                      >
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                        style={entry.source === 'applications'
+                          ? { backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }
+                          : { backgroundColor: 'rgba(255,195,112,0.2)', color: '#b07800' }}>
                         {entry.source === 'applications' ? 'Application' : 'Inquiry'}
                       </span>
                     </td>
@@ -390,37 +383,39 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <p className="text-sm text-gray-500 truncate max-w-[160px]">{entry.detail || '—'}</p>
                     </td>
                     <td className="px-5 py-4 hidden lg:table-cell">
+                      {entry.source === 'applications' && (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                          style={
+                            entry.data.status === 'accepted'
+                              ? { backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }
+                              : entry.data.status === 'rejected'
+                              ? { backgroundColor: 'rgba(239,68,68,0.1)', color: '#dc2626' }
+                              : { backgroundColor: 'rgba(156,163,175,0.2)', color: '#6b7280' }
+                          }>
+                          {entry.data.status === 'accepted' ? '✅ Accepted' : entry.data.status === 'rejected' ? '❌ Rejected' : '⏳ Pending'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 hidden lg:table-cell">
                       <p className="text-xs text-gray-400">
-                        {new Date(entry.receivedAt).toLocaleDateString('en-US', {
-                          month: 'short', day: 'numeric', year: 'numeric',
-                        })}
+                        {new Date(entry.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </td>
-                    <td
-                      className="px-5 py-4 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       {confirmDelete === entry.id ? (
                         <div className="flex items-center gap-1 justify-end">
-                          <button
-                            onClick={() => handleDelete(entry.id, entry.source)}
-                            disabled={deletingId === entry.id}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-                          >
+                          <button onClick={() => handleDelete(entry.id, entry.source)} disabled={deletingId === entry.id}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50">
                             {deletingId === entry.id ? '...' : 'Delete'}
                           </button>
-                          <button
-                            onClick={() => setConfirmDelete(null)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                          >
+                          <button onClick={() => setConfirmDelete(null)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
                             Cancel
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setConfirmDelete(entry.id)}
-                          className="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                        >
+                        <button onClick={() => setConfirmDelete(entry.id)}
+                          className="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -433,25 +428,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </table>
           )}
         </div>
-
-        <p className="text-xs text-gray-400 text-center mt-4">
-          {filtered.length} of {entries.length} submissions
-        </p>
+        <p className="text-xs text-gray-400 text-center mt-4">{filtered.length} of {entries.length} submissions</p>
       </div>
 
-      {/* Detail Modal */}
-      {selected && <DetailModal entry={selected} onClose={() => setSelected(null)} />}
+      {selected && <DetailModal entry={selected} onClose={() => setSelected(null)} onRespond={handleRespond} />}
     </div>
   );
 }
 
-// ── Root ──────────────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed] = useState(() => !!getToken());
-
-  if (!authed) {
-    return <LoginScreen onLogin={() => setAuthed(true)} />;
-  }
-
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
   return <Dashboard onLogout={() => setAuthed(false)} />;
 }
