@@ -117,7 +117,9 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
   const isApp = entry.source === 'applications';
   const d = entry.data;
   const [responding, setResponding] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(d.status || null);
+  const [done, setDone] = useState<string | null>(
+  d.status && d.status !== 'pending' ? d.status : null
+);
 
   const handleRespond = async (decision: 'accepted' | 'rejected') => {
     setResponding(decision);
