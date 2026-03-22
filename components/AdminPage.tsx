@@ -34,6 +34,7 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
 // ── Login Screen ──────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -72,15 +73,34 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-[#133020] mb-2">Admin Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 text-[#133020] placeholder-gray-400"
-                style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl outline-none focus:ring-2 text-[#133020] placeholder-gray-400"
+                  style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#046241] transition-colors p-1"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50" style={{ backgroundColor: '#046241' }}>
               {loading ? 'Signing in...' : 'Sign In'}
@@ -93,23 +113,39 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 }
 
 // ── Detail Modal ──────────────────────────────────────────────────────────────
-function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected') => void }) {
+function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected' | 'resolved' | 'irrelevant') => void }) {
   const isApp = entry.source === 'applications';
   const d = entry.data;
-  const [responding, setResponding] = useState<'accepted' | 'rejected' | null>(null);
-  const [done, setDone] = useState<'accepted' | 'rejected' | null>(entry.data.status === 'accepted' ? 'accepted' : entry.data.status === 'rejected' ? 'rejected' : null);
+  const [responding, setResponding] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(d.status || null);
 
   const handleRespond = async (decision: 'accepted' | 'rejected') => {
     setResponding(decision);
     try {
       await apiFetch('/api/admin-respond', {
         method: 'POST',
-        body: JSON.stringify({ id: entry.id, decision, email: entry.email, name: entry.data.first_name || entry.name, position: entry.data.position || entry.detail }),
+        body: JSON.stringify({ id: entry.id, decision, email: entry.email, name: d.first_name || entry.name, position: d.position || entry.detail }),
       });
       setDone(decision);
       onRespond(entry.id, decision);
     } catch {
       alert('Failed to send response. Please try again.');
+    } finally {
+      setResponding(null);
+    }
+  };
+
+  const handleInquiryStatus = async (status: 'resolved' | 'irrelevant') => {
+    setResponding(status);
+    try {
+      await apiFetch('/api/admin-inquiry-status', {
+        method: 'POST',
+        body: JSON.stringify({ id: entry.id, status }),
+      });
+      setDone(status);
+      onRespond(entry.id, status);
+    } catch {
+      alert('Failed to update status. Please try again.');
     } finally {
       setResponding(null);
     }
@@ -170,34 +206,49 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
           <Row label="Received" value={new Date(entry.receivedAt).toLocaleString()} />
         </div>
 
-        {/* Accept / Reject buttons — only for applications */}
-        {isApp && (
-          <div className="px-5 pb-5 pt-3 border-t border-gray-100">
-            {done ? (
+        {/* Action buttons */}
+        <div className="px-5 pb-5 pt-3 border-t border-gray-100">
+          {isApp ? (
+            done ? (
               <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold ${done === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
                 {done === 'accepted' ? '✅ Accepted — email sent to applicant' : '❌ Rejected — email sent to applicant'}
               </div>
             ) : (
               <div className="flex gap-3">
-                <button
-                  onClick={() => handleRespond('accepted')}
-                  disabled={!!responding}
+                <button onClick={() => handleRespond('accepted')} disabled={!!responding}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                  style={{ backgroundColor: '#046241' }}
-                >
+                  style={{ backgroundColor: '#046241' }}>
                   {responding === 'accepted' ? 'Sending...' : '✅ Accept'}
                 </button>
-                <button
-                  onClick={() => handleRespond('rejected')}
-                  disabled={!!responding}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 bg-red-500 hover:bg-red-600"
-                >
+                <button onClick={() => handleRespond('rejected')} disabled={!!responding}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 bg-red-500">
                   {responding === 'rejected' ? 'Sending...' : '❌ Reject'}
                 </button>
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            done ? (
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold ${
+                done === 'resolved' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {done === 'resolved' ? '✅ Marked as Resolved' : '🚫 Marked as Irrelevant'}
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button onClick={() => handleInquiryStatus('resolved')} disabled={!!responding}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  style={{ backgroundColor: '#046241' }}>
+                  {responding === 'resolved' ? 'Updating...' : '✅ Resolved'}
+                </button>
+                <button onClick={() => handleInquiryStatus('irrelevant')} disabled={!!responding}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+                  {responding === 'irrelevant' ? 'Updating...' : '🚫 Irrelevant'}
+                </button>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   );
@@ -210,6 +261,19 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-sm text-[#133020] font-medium">{value}</span>
     </div>
   );
+}
+
+// ── Status Badge ──────────────────────────────────────────────────────────────
+function StatusBadge({ status, source }: { status: string; source: string }) {
+  if (source === 'applications') {
+    if (status === 'accepted') return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }}>✅ Accepted</span>;
+    if (status === 'rejected') return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>❌ Rejected</span>;
+    return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(156,163,175,0.2)', color: '#6b7280' }}>⏳ Pending</span>;
+  } else {
+    if (status === 'resolved') return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }}>✅ Resolved</span>;
+    if (status === 'irrelevant') return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(156,163,175,0.2)', color: '#6b7280' }}>🚫 Irrelevant</span>;
+    return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(255,195,112,0.2)', color: '#b07800' }}>⏳ Pending</span>;
+  }
 }
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
@@ -252,10 +316,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleRespond = (id: string, decision: 'accepted' | 'rejected') => {
+  const handleRespond = (id: string, decision: string) => {
     setEntries((prev) =>
       prev.map((e) => e.id === id ? { ...e, data: { ...e.data, status: decision } } : e)
     );
+    setSelected((prev) => prev?.id === id ? { ...prev, data: { ...prev.data, status: decision } } : prev);
   };
 
   const filtered = entries.filter((e) => {
@@ -383,18 +448,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <p className="text-sm text-gray-500 truncate max-w-[160px]">{entry.detail || '—'}</p>
                     </td>
                     <td className="px-5 py-4 hidden lg:table-cell">
-                      {entry.source === 'applications' && (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold"
-                          style={
-                            entry.data.status === 'accepted'
-                              ? { backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }
-                              : entry.data.status === 'rejected'
-                              ? { backgroundColor: 'rgba(239,68,68,0.1)', color: '#dc2626' }
-                              : { backgroundColor: 'rgba(156,163,175,0.2)', color: '#6b7280' }
-                          }>
-                          {entry.data.status === 'accepted' ? '✅ Accepted' : entry.data.status === 'rejected' ? '❌ Rejected' : '⏳ Pending'}
-                        </span>
-                      )}
+                      <StatusBadge status={entry.data.status || 'pending'} source={entry.source} />
                     </td>
                     <td className="px-5 py-4 hidden lg:table-cell">
                       <p className="text-xs text-gray-400">
