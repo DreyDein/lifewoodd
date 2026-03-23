@@ -30,14 +30,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'GET') {
     const { data: applications, error: appErr } = await supabase
-      .from('applications')
-      .select('*')
-      .order('created_at', { ascending: false });
+  .from('applications')
+  .select('*')
+  .is('deleted_at', null)
+  .order('created_at', { ascending: false });
 
-    const { data: contacts, error: conErr } = await supabase
-      .from('inquiries')
-      .select('*')
-      .order('created_at', { ascending: false });
+const { data: contacts, error: conErr } = await supabase
+  .from('inquiries')
+  .select('*')
+  .is('deleted_at', null)
+  .order('created_at', { ascending: false });
 
     if (appErr) console.error('Supabase applications error:', appErr);
     if (conErr) console.error('Supabase contacts error:', conErr);

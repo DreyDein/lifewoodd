@@ -34,7 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const table = source === 'applications' ? 'applications' : source === 'contacts' ? 'inquiries' : null;
   if (!table) return res.status(400).send('Invalid source.');
 
-  const { error } = await supabase.from(table).delete().eq('id', id);
+  const { error } = await supabase
+  .from(table)
+  .update({ deleted_at: new Date().toISOString() })
+  .eq('id', id);
   if (error) return res.status(500).send('Delete failed.');
 
   return res.status(200).json({ ok: true });
