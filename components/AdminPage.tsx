@@ -114,7 +114,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
 // ── Detail Modal ──────────────────────────────────────────────────────────────
 function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected' | 'resolved' | 'irrelevant') => void }) {
-  const [showPdf, setShowPdf] = useState(false);
+  const [replyMessage, setReplyMessage] = useState('');
   const isApp = entry.source === 'applications';
   const d = entry.data;
   const [responding, setResponding] = useState<string | null>(null);
@@ -139,20 +139,26 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
   };
 
   const handleInquiryStatus = async (status: 'resolved' | 'irrelevant') => {
-    setResponding(status);
-    try {
-      await apiFetch('/api/admin-inquiry-status', {
-        method: 'POST',
-        body: JSON.stringify({ id: entry.id, status }),
-      });
-      setDone(status);
-      onRespond(entry.id, status);
-    } catch {
-      alert('Failed to update status. Please try again.');
-    } finally {
-      setResponding(null);
-    }
-  };
+  setResponding(status);
+  try {
+    await apiFetch('/api/admin-inquiry-status', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        id: entry.id, 
+        status,
+        replyMessage: status === 'resolved' ? replyMessage : null,
+        email: d.email,
+        name: d.full_name,
+      }),
+    });
+    setDone(status);
+    onRespond(entry.id, status);
+  } catch {
+    alert('Failed to update status. Please try again.');
+  } finally {
+    setResponding(null);
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -237,20 +243,30 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
                 {done === 'resolved' ? '✅ Marked as Resolved' : '🚫 Marked as Irrelevant'}
               </div>
             ) : (
-              <div className="flex gap-3">
-                <button onClick={() => handleInquiryStatus('resolved')} disabled={!!responding}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                  style={{ backgroundColor: '#046241' }}>
-                  {responding === 'resolved' ? 'Updating...' : '✅ Resolved'}
-                </button>
-                <button onClick={() => handleInquiryStatus('irrelevant')} disabled={!!responding}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                  style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
-                  {responding === 'irrelevant' ? 'Updating...' : '🚫 Irrelevant'}
-                </button>
-              </div>
-            )
-          )}
+             <div className="space-y-3">
+                  <textarea
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    placeholder="Type your response to this inquiry (optional)..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none resize-none focus:ring-2"
+                    style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
+                  />
+                  <div className="flex gap-3">
+                    <button onClick={() => handleInquiryStatus('resolved')} disabled={!!responding}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                      style={{ backgroundColor: '#046241' }}>
+                      {responding === 'resolved' ? 'Sending...' : '✅ Resolve & Reply'}
+                    </button>
+                    <button onClick={() => handleInquiryStatus('irrelevant')} disabled={!!responding}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                      style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+                      {responding === 'irrelevant' ? 'Updating...' : '🚫 Irrelevant'}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
         </div>
       </div>
     </div>
