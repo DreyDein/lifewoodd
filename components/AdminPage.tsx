@@ -114,6 +114,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
 // ── Detail Modal ──────────────────────────────────────────────────────────────
 function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected' | 'resolved' | 'irrelevant') => void }) {
+  const [showPdf, setShowPdf] = useState(false);
   const isApp = entry.source === 'applications';
   const d = entry.data;
   const [responding, setResponding] = useState<string | null>(null);
@@ -184,13 +185,31 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
                   <p className="text-sm text-[#133020] bg-gray-50 rounded-xl p-3 leading-relaxed">{d.experience}</p>
                 </div>
               )}
-              {d.cv_url && (
-                <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold w-fit mt-2"
-                  style={{ backgroundColor: '#FFC370', color: '#133020' }}>
-                  📎 Download CV
-                </a>
-              )}
+           {d.cv_url && (
+  <div className="mt-3 space-y-2">
+    <div className="flex gap-2">
+      <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+        style={{ backgroundColor: '#FFC370', color: '#133020' }}>
+        📎 Download CV
+      </a>
+      <button
+        onClick={() => setShowPdf((v) => !v)}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border"
+        style={{ borderColor: '#046241', color: '#046241' }}>
+        {showPdf ? '🔼 Hide PDF' : '👁️ View PDF'}
+      </button>
+    </div>
+    {showPdf && (
+      <iframe
+        src={d.cv_url}
+        className="w-full rounded-xl border border-gray-200"
+        style={{ height: '400px' }}
+        title="CV Preview"
+      />
+    )}
+  </div>
+)}
             </>
           ) : (
             <>
