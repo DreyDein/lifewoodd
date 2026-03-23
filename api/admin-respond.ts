@@ -54,9 +54,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       html: isAccepted ? `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5;">
           <div style="background:#046241;padding:32px 40px;text-align:center;">
-            <h1 style="color:white;margin:0;font-size:24px;font-weight:800;">LIFEWOOD</h1>
-            <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:12px;letter-spacing:2px;">DATA TECHNOLOGY</p>
-          </div>
+          <img 
+            src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
+            alt="Lifewood" 
+            style="height:48px;width:auto;object-fit:contain;"
+          />
+        </div>
           <div style="padding:32px 40px;">
             <div style="background:#FFC370;color:#133020;font-weight:800;font-size:13px;letter-spacing:1px;padding:8px 20px;border-radius:20px;display:inline-block;margin-bottom:24px;">Application Accepted</div>
             <p style="color:#133020;font-size:16px;margin:0 0 16px;">Dear <strong>${name}</strong>,</p>
@@ -86,8 +89,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ` : `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5;">
           <div style="background:#046241;padding:32px 40px;text-align:center;">
-            <h1 style="color:white;margin:0;font-size:24px;font-weight:800;">LIFEWOOD</h1>
-            <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:12px;letter-spacing:2px;">DATA TECHNOLOGY</p>
+            <img 
+              src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
+              alt="Lifewood" 
+              style="height:48px;width:auto;object-fit:contain;"
+            />
           </div>
           <div style="padding:32px 40px;">
             <p style="color:#133020;font-size:16px;margin:0 0 16px;">Dear <strong>${name}</strong>,</p>
