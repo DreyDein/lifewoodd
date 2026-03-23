@@ -54,12 +54,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       html: isAccepted ? `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5;">
           <div style="background:#046241;padding:32px 40px;text-align:center;">
-          <img 
-            src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
-            alt="Lifewood" 
-            style="height:48px;width:auto;object-fit:contain;"
-          />
-        </div>
+            <div style="display:inline-block;background:#ffffff;padding:12px 28px;border-radius:50px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+              <img 
+                src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
+                alt="Lifewood" 
+                style="height:36px;width:auto;object-fit:contain;display:block;"
+              />
+            </div>
+          </div>
           <div style="padding:32px 40px;">
             <div style="background:#FFC370;color:#133020;font-weight:800;font-size:13px;letter-spacing:1px;padding:8px 20px;border-radius:20px;display:inline-block;margin-bottom:24px;">Application Accepted</div>
             <p style="color:#133020;font-size:16px;margin:0 0 16px;">Dear <strong>${name}</strong>,</p>
@@ -88,12 +90,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </div>
       ` : `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5;">
-          <div style="background:#046241;padding:32px 40px;text-align:center;">
-            <img 
-              src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
-              alt="Lifewood" 
-              style="height:48px;width:auto;object-fit:contain;"
-            />
+         <div style="background:#046241;padding:32px 40px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;padding:12px 28px;border-radius:50px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+              <img 
+                src="https://lifewood-website-zlwn.vercel.app/lifewood-logo.png" 
+                alt="Lifewood" 
+                style="height:36px;width:auto;object-fit:contain;display:block;"
+              />
+            </div>
           </div>
           <div style="padding:32px 40px;">
             <p style="color:#133020;font-size:16px;margin:0 0 16px;">Dear <strong>${name}</strong>,</p>
