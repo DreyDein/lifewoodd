@@ -156,7 +156,7 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-5 flex items-start justify-between" style={{ backgroundColor: '#046241' }}>
           <div>
@@ -171,7 +171,7 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+        <div className="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
           {isApp ? (
             <>
               <Row label="Full Name" value={`${d.first_name || ''} ${d.last_name || ''}`.trim()} />
@@ -185,31 +185,13 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
                   <p className="text-sm text-[#133020] bg-gray-50 rounded-xl p-3 leading-relaxed">{d.experience}</p>
                 </div>
               )}
-           {d.cv_url && (
-            <div className="mt-3 space-y-2">
-              <div className="flex gap-2">
+            {d.cv_url && (
                 <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold w-fit mt-2"
                   style={{ backgroundColor: '#FFC370', color: '#133020' }}>
                   📎 Download CV
                 </a>
-                <button
-                  onClick={() => setShowPdf((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border"
-                  style={{ borderColor: '#046241', color: '#046241' }}>
-                  {showPdf ? '🔼 Hide PDF' : '👁️ View PDF'}
-                </button>
-              </div>
-              {showPdf && (
-                <iframe
-                  src={d.cv_url}
-                  className="w-full rounded-xl border border-gray-200"
-                  style={{ height: '600px' }}
-                  title="CV Preview"
-                />
               )}
-            </div>
-          )}
             </>
           ) : (
             <>
