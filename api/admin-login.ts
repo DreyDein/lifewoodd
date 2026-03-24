@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-me';
+const ADMIN_EMAIL_LOGIN = process.env.ADMIN_EMAIL_LOGIN || '';
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
 
@@ -17,18 +18,24 @@ const createToken = () => {
   return `${body}.${signToken(body)}`;
 };
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).send('Method not allowed.');
 
-  const { password } = req.body || {};
-  
-  // ⚠️ TEMPORARY DEBUG - remove after fixing
-  console.log('Received password:', password);
-  console.log('Expected password:', process.env.ADMIN_PASSWORD);
-  console.log('Match:', password === process.env.ADMIN_PASSWORD);
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
 
-  if (!password) return res.status(400).send('Password is required.');
-  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid password.');
+  const { email, password } = body || {};
+
+  if (!email || !password) return res.status(400).send('Email and password are required.');
+  if (ADMIN_EMAIL_LOGIN && email !== ADMIN_EMAIL_LOGIN) return res.status(401).send('Invalid credentials.');
+  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid credentials.');
 
   return res.status(200).json({ token: createToken() });
 }

@@ -53,6 +53,7 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -65,12 +66,12 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     try {
       const data = await apiFetch('/api/admin-login', {
         method: 'POST',
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       setToken(data.token);
       onLogin();
     } catch {
-      setError('Invalid password. Please try again.');
+      setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,6 +92,18 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-[#133020] mb-2">Admin Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 text-[#133020] placeholder-gray-400"
+                style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
+              />
+            </div>
             <div>
               <label className="block text-sm font-semibold text-[#133020] mb-2">Admin Password</label>
               <div className="relative">
@@ -145,12 +158,7 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
   const [pwLoading, setPwLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const initials = profile.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = profile.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -198,15 +206,10 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Panel */}
       <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-40 shadow-2xl flex flex-col overflow-y-auto"
         style={{ animation: 'slideIn 0.25s ease' }}>
         <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
-
-        {/* Header */}
         <div className="p-6 flex items-center justify-between border-b border-gray-100" style={{ backgroundColor: '#046241' }}>
           <h2 className="text-lg font-bold text-white">Admin Profile</h2>
           <button onClick={onClose} className="text-white/70 hover:text-white transition-colors p-1">
@@ -215,18 +218,14 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
             </svg>
           </button>
         </div>
-
         <div className="flex-1 p-6 space-y-6">
-          {/* Avatar */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               {profile.photo ? (
                 <img src={profile.photo} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" />
               ) : (
                 <div className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white"
-                  style={{ backgroundColor: '#046241' }}>
-                  {initials}
-                </div>
+                  style={{ backgroundColor: '#046241' }}>{initials}</div>
               )}
               <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,13 +238,10 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
             <p className="text-xs text-gray-400">Click photo to change · Max 2MB</p>
             {profile.photo && (
               <button onClick={() => { const u = { ...profile, photo: null }; setProfile(u); saveProfile(u); }}
-                className="text-xs text-red-400 hover:text-red-600 transition-colors">
-                Remove photo
-              </button>
+                className="text-xs text-red-400 hover:text-red-600 transition-colors">Remove photo</button>
             )}
           </div>
 
-          {/* Profile Info */}
           <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#133020] uppercase tracking-wider">Profile Info</h3>
             <div className="space-y-3">
@@ -269,7 +265,6 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
             </button>
           </div>
 
-          {/* Change Password */}
           <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#133020] uppercase tracking-wider">Change Password</h3>
             {pwError && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium">{pwError}</div>}
@@ -310,7 +305,6 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
             </button>
           </div>
 
-          {/* Sign Out */}
           <button onClick={() => { clearToken(); onLogout(); }}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50 transition-colors">
             Sign Out
@@ -562,7 +556,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      {/* Header */}
       <div className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -582,14 +575,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            {/* Profile Avatar Button */}
             <button onClick={() => { setProfile(getProfile()); setShowProfile(true); }}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
               {profile.photo ? (
                 <img src={profile.photo} alt="Profile" className="w-7 h-7 rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                  style={{ backgroundColor: '#046241' }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#046241' }}>
                   {initials}
                 </div>
               )}
@@ -603,7 +594,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { label: 'Total Submissions', value: entries.length, color: '#046241' },
@@ -617,7 +607,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           ))}
         </div>
 
-        {/* Filters + Search */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
           <div className="flex gap-2">
             {(['all', 'applications', 'contacts'] as const).map((f) => (
@@ -639,7 +628,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
-        {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
