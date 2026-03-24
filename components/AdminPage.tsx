@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface EmailEntry {
@@ -11,11 +11,31 @@ interface EmailEntry {
   data: Record<string, any>;
 }
 
+interface AdminProfile {
+  name: string;
+  email: string;
+  photo: string | null;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TOKEN_KEY = 'lifewood_admin_token';
+const PROFILE_KEY = 'lifewood_admin_profile';
+
 const getToken = () => localStorage.getItem(TOKEN_KEY);
 const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+const getProfile = (): AdminProfile => {
+  try {
+    const stored = localStorage.getItem(PROFILE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return { name: 'Admin', email: '', photo: null };
+};
+
+const saveProfile = (profile: AdminProfile) => {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+};
 
 const apiFetch = async (path: string, options: RequestInit = {}) => {
   const token = getToken();
@@ -83,12 +103,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
                   className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl outline-none focus:ring-2 text-[#133020] placeholder-gray-400"
                   style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#046241] transition-colors p-1"
-                  tabIndex={-1}
-                >
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#046241] transition-colors p-1" tabIndex={-1}>
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -112,15 +128,209 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   );
 }
 
+// ── Profile Side Panel ────────────────────────────────────────────────────────
+function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
+  const [profile, setProfile] = useState<AdminProfile>(getProfile());
+  const [editName, setEditName] = useState(profile.name);
+  const [editEmail, setEditEmail] = useState(profile.email);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const initials = profile.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('Photo must be under 2MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const updated = { ...profile, photo: reader.result as string };
+      setProfile(updated);
+      saveProfile(updated);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = () => {
+    const updated = { ...profile, name: editName, email: editEmail };
+    setProfile(updated);
+    saveProfile(updated);
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 2000);
+  };
+
+  const handleChangePassword = async () => {
+    setPwError('');
+    setPwSuccess(false);
+    if (!currentPassword || !newPassword || !confirmPassword) { setPwError('All fields are required.'); return; }
+    if (newPassword !== confirmPassword) { setPwError('New passwords do not match.'); return; }
+    if (newPassword.length < 6) { setPwError('Password must be at least 6 characters.'); return; }
+    setPwLoading(true);
+    try {
+      await apiFetch('/api/admin-change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      setPwSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPwError(err.message || 'Failed to change password.');
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-40 shadow-2xl flex flex-col overflow-y-auto"
+        style={{ animation: 'slideIn 0.25s ease' }}>
+        <style>{`@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+
+        {/* Header */}
+        <div className="p-6 flex items-center justify-between border-b border-gray-100" style={{ backgroundColor: '#046241' }}>
+          <h2 className="text-lg font-bold text-white">Admin Profile</h2>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 p-6 space-y-6">
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              {profile.photo ? (
+                <img src={profile.photo} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" />
+              ) : (
+                <div className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white"
+                  style={{ backgroundColor: '#046241' }}>
+                  {initials}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            <p className="text-xs text-gray-400">Click photo to change · Max 2MB</p>
+            {profile.photo && (
+              <button onClick={() => { const u = { ...profile, photo: null }; setProfile(u); saveProfile(u); }}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                Remove photo
+              </button>
+            )}
+          </div>
+
+          {/* Profile Info */}
+          <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#133020] uppercase tracking-wider">Profile Info</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Display Name</label>
+                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-[#133020] outline-none focus:ring-2 bg-white"
+                  style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Email</label>
+                <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-[#133020] outline-none focus:ring-2 bg-white"
+                  style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any} />
+              </div>
+            </div>
+            <button onClick={handleSaveProfile}
+              className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+              style={{ backgroundColor: '#046241' }}>
+              {profileSaved ? '✅ Saved!' : 'Save Profile'}
+            </button>
+          </div>
+
+          {/* Change Password */}
+          <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#133020] uppercase tracking-wider">Change Password</h3>
+            {pwError && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium">{pwError}</div>}
+            {pwSuccess && <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs font-medium">✅ Password changed successfully!</div>}
+            <div className="space-y-3">
+              {[
+                { label: 'Current Password', value: currentPassword, setter: setCurrentPassword, show: showCurrent, toggleShow: () => setShowCurrent(v => !v) },
+                { label: 'New Password', value: newPassword, setter: setNewPassword, show: showNew, toggleShow: () => setShowNew(v => !v) },
+                { label: 'Confirm New Password', value: confirmPassword, setter: setConfirmPassword, show: showConfirm, toggleShow: () => setShowConfirm(v => !v) },
+              ].map(({ label, value, setter, show, toggleShow }) => (
+                <div key={label}>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                  <div className="relative">
+                    <input type={show ? 'text' : 'password'} value={value} onChange={(e) => setter(e.target.value)}
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm text-[#133020] outline-none focus:ring-2 bg-white"
+                      style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any} />
+                    <button type="button" onClick={toggleShow}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#046241] transition-colors">
+                      {show ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleChangePassword} disabled={pwLoading}
+              className="w-full py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: '#133020', color: 'white' }}>
+              {pwLoading ? 'Changing...' : 'Change Password'}
+            </button>
+          </div>
+
+          {/* Sign Out */}
+          <button onClick={() => { clearToken(); onLogout(); }}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50 transition-colors">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Detail Modal ──────────────────────────────────────────────────────────────
 function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose: () => void; onRespond: (id: string, decision: 'accepted' | 'rejected' | 'resolved' | 'irrelevant') => void }) {
   const [replyMessage, setReplyMessage] = useState('');
+  const [showPdf, setShowPdf] = useState(false);
   const isApp = entry.source === 'applications';
   const d = entry.data;
   const [responding, setResponding] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(
-  d.status && d.status !== 'pending' ? d.status : null
-);
+    d.status && d.status !== 'pending' ? d.status : null
+  );
 
   const handleRespond = async (decision: 'accepted' | 'rejected') => {
     setResponding(decision);
@@ -139,31 +349,24 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
   };
 
   const handleInquiryStatus = async (status: 'resolved' | 'irrelevant') => {
-  setResponding(status);
-  try {
-    await apiFetch('/api/admin-inquiry-status', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        id: entry.id, 
-        status,
-        replyMessage: status === 'resolved' ? replyMessage : null,
-        email: d.email,
-        name: d.full_name,
-      }),
-    });
-    setDone(status);
-    onRespond(entry.id, status);
-  } catch {
-    alert('Failed to update status. Please try again.');
-  } finally {
-    setResponding(null);
-  }
-};
+    setResponding(status);
+    try {
+      await apiFetch('/api/admin-inquiry-status', {
+        method: 'POST',
+        body: JSON.stringify({ id: entry.id, status, replyMessage: status === 'resolved' ? replyMessage : null, email: d.email, name: d.full_name }),
+      });
+      setDone(status);
+      onRespond(entry.id, status);
+    } catch {
+      alert('Failed to update status. Please try again.');
+    } finally {
+      setResponding(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="p-5 flex items-start justify-between" style={{ backgroundColor: '#046241' }}>
           <div>
             <h2 className="text-lg font-bold text-white">{entry.name}</h2>
@@ -175,9 +378,7 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
             </svg>
           </button>
         </div>
-
-        {/* Body */}
-        <div className="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
+        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
           {isApp ? (
             <>
               <Row label="Full Name" value={`${d.first_name || ''} ${d.last_name || ''}`.trim()} />
@@ -191,12 +392,24 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
                   <p className="text-sm text-[#133020] bg-gray-50 rounded-xl p-3 leading-relaxed">{d.experience}</p>
                 </div>
               )}
-            {d.cv_url && (
-                <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold w-fit mt-2"
-                  style={{ backgroundColor: '#FFC370', color: '#133020' }}>
-                  📎 Download CV
-                </a>
+              {d.cv_url && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex gap-2">
+                    <a href={d.cv_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+                      style={{ backgroundColor: '#FFC370', color: '#133020' }}>
+                      📎 Download CV
+                    </a>
+                    <button onClick={() => setShowPdf(v => !v)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors"
+                      style={{ borderColor: '#046241', color: '#046241' }}>
+                      {showPdf ? '🔼 Hide PDF' : '👁️ View PDF'}
+                    </button>
+                  </div>
+                  {showPdf && (
+                    <iframe src={d.cv_url} className="w-full rounded-xl border border-gray-200" style={{ height: '600px' }} title="CV Preview" />
+                  )}
+                </div>
               )}
             </>
           ) : (
@@ -214,8 +427,6 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
           )}
           <Row label="Received" value={new Date(entry.receivedAt).toLocaleString()} />
         </div>
-
-        {/* Action buttons */}
         <div className="px-5 pb-5 pt-3 border-t border-gray-100">
           {isApp ? (
             done ? (
@@ -237,36 +448,30 @@ function DetailModal({ entry, onClose, onRespond }: { entry: EmailEntry; onClose
             )
           ) : (
             done ? (
-              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold ${
-                done === 'resolved' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-              }`}>
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold ${done === 'resolved' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                 {done === 'resolved' ? '✅ Marked as Resolved' : '🚫 Marked as Irrelevant'}
               </div>
             ) : (
-             <div className="space-y-3">
-                  <textarea
-                    value={replyMessage}
-                    onChange={(e) => setReplyMessage(e.target.value)}
-                    placeholder="Type your response to this inquiry (optional)..."
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none resize-none focus:ring-2"
-                    style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any}
-                  />
-                  <div className="flex gap-3">
-                    <button onClick={() => handleInquiryStatus('resolved')} disabled={!!responding}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                      style={{ backgroundColor: '#046241' }}>
-                      {responding === 'resolved' ? 'Sending...' : '✅ Resolve & Reply'}
-                    </button>
-                    <button onClick={() => handleInquiryStatus('irrelevant')} disabled={!!responding}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                      style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
-                      {responding === 'irrelevant' ? 'Updating...' : '🚫 Irrelevant'}
-                    </button>
-                  </div>
+              <div className="space-y-3">
+                <textarea value={replyMessage} onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type your response to this inquiry (optional)..." rows={3}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none resize-none focus:ring-2"
+                  style={{ '--tw-ring-color': 'rgba(4,98,65,0.3)' } as any} />
+                <div className="flex gap-3">
+                  <button onClick={() => handleInquiryStatus('resolved')} disabled={!!responding}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                    style={{ backgroundColor: '#046241' }}>
+                    {responding === 'resolved' ? 'Sending...' : '✅ Resolve & Reply'}
+                  </button>
+                  <button onClick={() => handleInquiryStatus('irrelevant')} disabled={!!responding}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                    style={{ backgroundColor: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+                    {responding === 'irrelevant' ? 'Updating...' : '🚫 Irrelevant'}
+                  </button>
                 </div>
-              )
-            )}
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>
@@ -282,7 +487,6 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ── Status Badge ──────────────────────────────────────────────────────────────
 function StatusBadge({ status, source }: { status: string; source: string }) {
   if (source === 'applications') {
     if (status === 'accepted') return <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: 'rgba(4,98,65,0.1)', color: '#046241' }}>✅ Accepted</span>;
@@ -305,6 +509,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [selected, setSelected] = useState<EmailEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState<AdminProfile>(getProfile());
+
+  const initials = profile.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const load = async () => {
     setLoading(true);
@@ -336,9 +544,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   const handleRespond = (id: string, decision: string) => {
-    setEntries((prev) =>
-      prev.map((e) => e.id === id ? { ...e, data: { ...e.data, status: decision } } : e)
-    );
+    setEntries((prev) => prev.map((e) => e.id === id ? { ...e, data: { ...e.data, status: decision } } : e));
     setSelected((prev) => prev?.id === id ? { ...prev, data: { ...prev.data, status: decision } } : prev);
   };
 
@@ -376,8 +582,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <button onClick={() => { clearToken(); onLogout(); }} className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 transition-colors">
-              Sign Out
+            {/* Profile Avatar Button */}
+            <button onClick={() => { setProfile(getProfile()); setShowProfile(true); }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
+              {profile.photo ? (
+                <img src={profile.photo} alt="Profile" className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                  style={{ backgroundColor: '#046241' }}>
+                  {initials}
+                </div>
+              )}
+              <span className="text-sm font-semibold text-[#133020] hidden sm:block">{profile.name}</span>
+              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
           </div>
         </div>
@@ -449,12 +668,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <tbody>
                 {filtered.map((entry) => (
                   <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelected(entry)}>
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-[#133020] text-sm">{entry.name}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="text-sm text-gray-500">{entry.email}</p>
-                    </td>
+                    <td className="px-5 py-4"><p className="font-semibold text-[#133020] text-sm">{entry.name}</p></td>
+                    <td className="px-5 py-4"><p className="text-sm text-gray-500">{entry.email}</p></td>
                     <td className="px-5 py-4 hidden md:table-cell">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold"
                         style={entry.source === 'applications'
@@ -505,6 +720,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       </div>
 
       {selected && <DetailModal entry={selected} onClose={() => setSelected(null)} onRespond={handleRespond} />}
+      {showProfile && <ProfilePanel onClose={() => setShowProfile(false)} onLogout={onLogout} />}
     </div>
   );
 }
