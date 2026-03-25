@@ -509,7 +509,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<AdminProfile>(getProfile());
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
   const initials = profile.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const load = async () => {
@@ -526,6 +527,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  useEffect(() => { setCurrentPage(1); }, [filter, search]);
   useEffect(() => { load(); }, []);
 
   const handleDelete = async (id: string, source: string) => {
@@ -554,6 +556,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       e.detail.toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+  const paginated = filtered.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
 
   const appCount = entries.filter((e) => e.source === 'applications').length;
   const conCount = entries.filter((e) => e.source === 'contacts').length;
@@ -658,7 +666,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((entry) => (
+                {paginated.map((entry) => (
                   <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelected(entry)}>
                     <td className="px-5 py-4"><p className="font-semibold text-[#133020] text-sm">{entry.name}</p></td>
                     <td className="px-5 py-4"><p className="text-sm text-gray-500">{entry.email}</p></td>
@@ -708,7 +716,62 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </table>
           )}
         </div>
-        <p className="text-xs text-gray-400 text-center mt-4">{filtered.length} of {entries.length} submissions</p>
+        <div className="flex items-center justify-between mt-4 px-1">
+  <p className="text-xs text-gray-400">
+    {filtered.length} submission{filtered.length !== 1 ? 's' : ''} · Page {currentPage} of {totalPages || 1}
+  </p>
+
+  <div className="flex items-center gap-1">
+
+    <button
+      onClick={() => setCurrentPage(1)}
+      disabled={currentPage === 1}
+      className="p-1.5 rounded-lg text-gray-400 hover:text-[#046241] hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+    >
+      ⏮
+    </button>
+
+    <button
+      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+      disabled={currentPage === 1}
+      className="p-1.5 rounded-lg text-gray-400 hover:text-[#046241] hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+    >
+      ◀
+    </button>
+
+    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+      <button
+        key={page}
+        onClick={() => setCurrentPage(page)}
+        className="w-7 h-7 rounded-lg text-xs font-bold transition-colors"
+        style={
+          currentPage === page
+            ? { backgroundColor: '#046241', color: 'white' }
+            : { color: '#6b7280' }
+        }
+      >
+        {page}
+      </button>
+    ))}
+
+    <button
+      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+      disabled={currentPage === totalPages || totalPages === 0}
+      className="p-1.5 rounded-lg text-gray-400 hover:text-[#046241] hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+    >
+      ▶
+    </button>
+
+    <button
+      onClick={() => setCurrentPage(totalPages)}
+      disabled={currentPage === totalPages || totalPages === 0}
+      className="p-1.5 rounded-lg text-gray-400 hover:text-[#046241] hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+    >
+      ⏭
+    </button>
+
+  </div>
+</div>
       </div>
 
       {selected && <DetailModal entry={selected} onClose={() => setSelected(null)} onRespond={handleRespond} />}
