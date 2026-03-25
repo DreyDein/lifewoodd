@@ -47,17 +47,21 @@ const supabase = createClient(
 // ── Admin Database ───────────────────────────────────────────────────────────
 const initAdminsTable = async () => {
   try {
-    const { error } = await supabase.from('admins').select('id').limit(1);
-    if (error?.code === '42P01') {
-      console.log('Creating admins table...');
-      await supabase.from('admins').insert({
+    const { data, error } = await supabase.from('admins').select('id').limit(1);
+    if (error) {
+      console.log('⚠️ Admins table not accessible:', error.message);
+      console.log('Please run sql-setup.sql in Supabase SQL Editor');
+    } else if (!data?.length) {
+      console.log('No admins found. Creating initial admin...');
+      const { error: insertErr } = await supabase.from('admins').insert({
         id: crypto.randomUUID(),
         email: 'admin@lifewood.com',
         password_hash: await bcrypt.hash(ADMIN_PASSWORD, 10),
         name: 'Super Admin',
         created_at: new Date().toISOString(),
       });
-      console.log('✅ Initial admin created. Email: admin@lifewood.com');
+      if (insertErr) console.error('Insert error:', insertErr);
+      else console.log('✅ Initial admin created. Email: admin@lifewood.com');
     }
   } catch (err) {
     console.error('Admin table init error:', err);
