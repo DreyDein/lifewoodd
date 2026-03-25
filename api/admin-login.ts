@@ -1,10 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-me';
-const ADMIN_EMAIL_LOGIN = process.env.ADMIN_EMAIL_LOGIN || '';
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_KEY || ''
+);
 
 const base64UrlEncode = (value: any) =>
   Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -34,8 +39,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { email, password } = body || {};
 
   if (!email || !password) return res.status(400).send('Email and password are required.');
-  if (ADMIN_EMAIL_LOGIN && email !== ADMIN_EMAIL_LOGIN) return res.status(401).send('Invalid credentials.');
-  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid credentials.');
 
-  return res.status(200).json({ token: createToken() });
+  const { data: admins, error } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .limit(1);
+
+  if (error) {
+    console.error('Login query error:', error);
+    return res.status(500).send('Server error: ' + error.message);
+  }
+
+  if (!admins?.length) return res.status(401).send('Invalid credentials.');
+
+  const admin = admins[0];
+  const valid = await bcrypt.compare(password, admin.password_hash);
+  if (!valid) return res.status(401).send('Invalid credentials.');
+
+  return res.status(200).json({
+    token: createToken(),
+    user: { id: admin.id, email: admin.email, name: admin.name }
+  });
 }
