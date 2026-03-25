@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 const PORT = Number(process.env.PORT || 5174);
@@ -42,6 +43,28 @@ const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_KEY || ''
 );
+
+// ── Admin Database ───────────────────────────────────────────────────────────
+const initAdminsTable = async () => {
+  try {
+    const { error } = await supabase.from('admins').select('id').limit(1);
+    if (error?.code === '42P01') {
+      console.log('Creating admins table...');
+      await supabase.from('admins').insert({
+        id: crypto.randomUUID(),
+        email: 'admin@lifewood.com',
+        password_hash: await bcrypt.hash(ADMIN_PASSWORD, 10),
+        name: 'Super Admin',
+        created_at: new Date().toISOString(),
+      });
+      console.log('✅ Initial admin created. Email: admin@lifewood.com');
+    }
+  } catch (err) {
+    console.error('Admin table init error:', err);
+  }
+};
+
+await initAdminsTable();
 
 // ── Multer ────────────────────────────────────────────────────────────────────
 const allowedExtensions = new Set(['.pdf', '.doc', '.docx']);
@@ -116,11 +139,72 @@ const writeJsonLines = async (filePath, entries) => {
 };
 
 // ── Admin login ───────────────────────────────────────────────────────────────
-app.post('/api/admin/login', (req, res) => {
-  const { password } = req.body || {};
-  if (!password) { res.status(400).send('Password is required.'); return; }
-  if (password !== ADMIN_PASSWORD) { res.status(401).send('Invalid password.'); return; }
-  res.status(200).json({ token: createToken() });
+app.post('/api/admin/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) { res.status(400).send('Email and password are required.'); return; }
+  
+  const { data: admins, error } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .limit(1);
+  
+  if (error) { console.error('Login query error:', error); res.status(500).send('Server error.'); return; }
+  if (!admins?.length) { res.status(401).send('Invalid credentials.'); return; }
+  
+  const admin = admins[0];
+  const valid = await bcrypt.compare(password, admin.password_hash);
+  if (!valid) { res.status(401).send('Invalid credentials.'); return; }
+  
+  res.status(200).json({ 
+    token: createToken(),
+    user: { id: admin.id, email: admin.email, name: admin.name }
+  });
+});
+
+// ── Admin registration (by existing admin) ─────────────────────────────────
+app.post('/api/admin/register', requireAdmin, async (req, res) => {
+  const { email, password, name } = req.body || {};
+  if (!email || !password || !name) { res.status(400).send('Email, password, and name are required.'); return; }
+  if (password.length < 6) { res.status(400).send('Password must be at least 6 characters.'); return; }
+  
+  const { data: existing } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('email', email.toLowerCase())
+    .limit(1);
+  
+  if (existing?.length) { res.status(400).send('Email already registered.'); return; }
+  
+  const { error } = await supabase.from('admins').insert({
+    id: crypto.randomUUID(),
+    email: email.toLowerCase(),
+    password_hash: await bcrypt.hash(password, 10),
+    name,
+    created_at: new Date().toISOString(),
+  });
+  
+  if (error) { console.error('Register error:', error); res.status(500).send('Failed to create admin.'); return; }
+  res.status(200).json({ ok: true, message: 'Admin created successfully.' });
+});
+
+// ── Admin: list admins ───────────────────────────────────────────────────────
+app.get('/api/admin/list', requireAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from('admins')
+    .select('id, email, name, created_at')
+    .order('created_at', { ascending: true });
+  if (error) { console.error('List admins error:', error); res.status(500).send('Failed to list admins.'); return; }
+  res.status(200).json(data || []);
+});
+
+// ── Admin: delete admin ──────────────────────────────────────────────────────
+app.delete('/api/admin/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  if (id === req.admin.sub) { res.status(400).send('Cannot delete yourself.'); return; }
+  const { error } = await supabase.from('admins').delete().eq('id', id);
+  if (error) { console.error('Delete admin error:', error); res.status(500).send('Failed to delete admin.'); return; }
+  res.status(200).json({ ok: true });
 });
 
 // ── Admin: list all emails (from Supabase) ────────────────────────────────────
