@@ -17,8 +17,8 @@ const base64UrlEncode = (value: any) =>
 const signToken = (payload: string) =>
   crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(payload).digest('base64url');
 
-const createToken = () => {
-  const payload = { sub: 'admin', exp: Date.now() + ADMIN_TOKEN_TTL_MS };
+const createToken = (adminId: string) => {
+  const payload = { sub: adminId, exp: Date.now() + ADMIN_TOKEN_TTL_MS };
   const body = base64UrlEncode(payload);
   return `${body}.${signToken(body)}`;
 };
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!valid) return res.status(401).send('Invalid credentials.');
 
   return res.status(200).json({
-    token: createToken(),
+    token: createToken(admin.id),
     user: { id: admin.id, email: admin.email, name: admin.name }
   });
 }

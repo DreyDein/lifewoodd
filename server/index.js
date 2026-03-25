@@ -102,8 +102,8 @@ const base64UrlEncode = (value) =>
 const signToken = (payload) =>
   crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(payload).digest('base64url');
 
-const createToken = () => {
-  const payload = { sub: 'admin', exp: Date.now() + ADMIN_TOKEN_TTL_MS };
+const createToken = (adminId) => {
+  const payload = { sub: adminId, exp: Date.now() + ADMIN_TOKEN_TTL_MS };
   const body = base64UrlEncode(payload);
   return `${body}.${signToken(body)}`;
 };
@@ -173,10 +173,10 @@ const handleAdminLogin = async (req, res) => {
   console.log('Password valid:', valid);
   if (!valid) { res.status(401).send('Invalid credentials.'); return; }
   
-  res.status(200).json({ 
-    token: createToken(),
-    user: { id: admin.id, email: admin.email, name: admin.name }
-  });
+    res.status(200).json({ 
+      token: createToken(admin.id),
+      user: { id: admin.id, email: admin.email, name: admin.name }
+    });
 };
 
 app.post('/api/admin/login', handleAdminLogin);
