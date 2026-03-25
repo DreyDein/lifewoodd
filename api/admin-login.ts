@@ -59,6 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     token: createToken(admin.id),
-    user: { id: admin.id, email: admin.email, name: admin.name }
+    user: { id: admin.id, email: admin.email, name: admin.name, photo: admin.photo || null }
   });
 }

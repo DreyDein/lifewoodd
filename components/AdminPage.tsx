@@ -276,23 +276,40 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
 
   const initials = profile.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { alert('Photo must be under 2MB.'); return; }
     const reader = new FileReader();
-    reader.onload = () => {
-      const updated = { ...profile, photo: reader.result as string };
+    reader.onload = async () => {
+      const photoData = reader.result as string;
+      const updated = { ...profile, photo: photoData };
       setProfile(updated);
       saveProfile(updated);
+      try {
+        await apiFetch('/api/admin-profile', {
+          method: 'POST',
+          body: JSON.stringify({ name: profile.name, photo: photoData }),
+        });
+      } catch (err) {
+        console.error('Failed to save photo to database:', err);
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const updated = { ...profile, name: editName, email: editEmail };
     setProfile(updated);
     saveProfile(updated);
+    try {
+      await apiFetch('/api/admin-profile', {
+        method: 'POST',
+        body: JSON.stringify({ name: editName, photo: profile.photo }),
+      });
+    } catch (err) {
+      console.error('Failed to save profile to database:', err);
+    }
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
   };
@@ -644,7 +661,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   useEffect(() => { setCurrentPage(1); }, [filter, search]);
-  useEffect(() => { load(); }, []);
+  useEffect(() => { 
+    load();
+    apiFetch('/api/admin-profile').then(data => {
+      if (data?.name || data?.photo) {
+        const updated = { ...getProfile(), name: data.name || getProfile().name, photo: data.photo || getProfile().photo };
+        setProfile(updated);
+        saveProfile(updated);
+      }
+    }).catch(console.error);
+  }, []);
 
   const handleDelete = async (id: string, source: string) => {
     setDeletingId(id);
