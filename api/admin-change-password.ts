@@ -1,9 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_KEY || ''
+);
 
 const signToken = (payload: string) =>
   crypto.createHmac('sha256', ADMIN_TOKEN_SECRET).update(payload).digest('base64url');
@@ -21,25 +26,51 @@ const verifyToken = (token: string | null) => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const header = (req.headers.authorization as string) || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!verifyToken(token)) return res.status(401).send('Unauthorized.');
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).send('Unauthorized.');
   if (req.method !== 'POST') return res.status(405).send('Method not allowed.');
 
-  const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword) return res.status(400).send('Missing fields.');
-
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-  if (currentPassword !== ADMIN_PASSWORD) {
-    return res.status(401).send('Current password is incorrect.');
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
   }
+
+  const { currentPassword, newPassword } = body || {};
+  if (!currentPassword || !newPassword) return res.status(400).send('Missing fields.');
 
   if (newPassword.length < 6) {
     return res.status(400).send('Password must be at least 6 characters.');
   }
 
-  // Note: On Vercel, env variables can't be changed at runtime.
-  // Return a message instructing admin to update env variable manually.
-  return res.status(200).json({ 
-    ok: true, 
-    message: 'To complete the password change, update ADMIN_PASSWORD in your Vercel environment variables and redeploy.' 
-  });
+  // Get current admin from database
+  const { data: admins, error: fetchError } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('id', payload.sub)
+    .limit(1);
+
+  if (fetchError || !admins?.length) {
+    return res.status(401).send('Admin not found.');
+  }
+
+  const admin = admins[0];
+
+  // Verify current password
+  const valid = await bcrypt.compare(currentPassword, admin.password_hash);
+  if (!valid) {
+    return res.status(401).send('Current password is incorrect.');
+  }
+
+  // Update password in database
+  const { error: updateError } = await supabase
+    .from('admins')
+    .update({ password_hash: await bcrypt.hash(newPassword, 10) })
+    .eq('id', admin.id);
+
+  if (updateError) {
+    console.error('Password update error:', updateError);
+    return res.status(500).send('Failed to update password.');
+  }
+
+  return res.status(200).json({ ok: true, message: 'Password updated successfully.' });
 }
