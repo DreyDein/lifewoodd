@@ -385,8 +385,8 @@ function ProfilePanel({ onClose, onLogout }: { onClose: () => void; onLogout: ()
             <h3 className="text-sm font-bold text-[#133020] uppercase tracking-wider">Change Password</h3>
             {pwError && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium">{pwError}</div>}
               {pwSuccess && (
-                <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs font-medium">
-                  ⚠️ Password verified! To complete the change, update <strong>ADMIN_PASSWORD</strong> in Vercel Environment Variables and redeploy.
+                <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs font-medium">
+                  ✅ Password changed successfully!
                 </div>
               )}
             <div className="space-y-3">
