@@ -64,7 +64,7 @@ function LoginScreen({ onLogin, onSwitchToRegister }: { onLogin: () => void; onS
     setError('');
     setLoading(true);
     try {
-      const data = await apiFetch('/api/admin/login', {
+      const data = await apiFetch('/api/admin-login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
@@ -163,7 +163,7 @@ function RegisterScreen({ onRegister, onSwitchToLogin }: { onRegister: () => voi
     setError('');
     setLoading(true);
     try {
-      await apiFetch('/api/admin/register', {
+      await apiFetch('/api/admin-register', {
         method: 'POST',
         body: JSON.stringify({ email, password, name }),
       });

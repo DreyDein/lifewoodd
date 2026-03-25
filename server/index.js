@@ -149,7 +149,7 @@ const writeJsonLines = async (filePath, entries) => {
 };
 
 // ── Admin login ───────────────────────────────────────────────────────────────
-app.post('/api/admin/login', async (req, res) => {
+const handleAdminLogin = async (req, res) => {
   const { email, password } = req.body || {};
   console.log('Login attempt:', email);
   
@@ -176,10 +176,13 @@ app.post('/api/admin/login', async (req, res) => {
     token: createToken(),
     user: { id: admin.id, email: admin.email, name: admin.name }
   });
-});
+};
+
+app.post('/api/admin/login', handleAdminLogin);
+app.post('/api/admin-login', handleAdminLogin);
 
 // ── Admin registration (by existing admin) ─────────────────────────────────
-app.post('/api/admin/register', requireAdmin, async (req, res) => {
+const handleAdminRegister = async (req, res) => {
   const { email, password, name } = req.body || {};
   if (!email || !password || !name) { res.status(400).send('Email, password, and name are required.'); return; }
   if (password.length < 6) { res.status(400).send('Password must be at least 6 characters.'); return; }
@@ -202,7 +205,10 @@ app.post('/api/admin/register', requireAdmin, async (req, res) => {
   
   if (error) { console.error('Register error:', error); res.status(500).send('Failed to create admin.'); return; }
   res.status(200).json({ ok: true, message: 'Admin created successfully.' });
-});
+};
+
+app.post('/api/admin/register', requireAdmin, handleAdminRegister);
+app.post('/api/admin-register', handleAdminRegister);
 
 // ── Admin: list admins ───────────────────────────────────────────────────────
 app.get('/api/admin/list', requireAdmin, async (req, res) => {
