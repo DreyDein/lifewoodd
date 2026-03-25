@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
 
-  const { email, password, name, registerKey } = body || {};
+  const { email, password, name } = body || {};
 
   if (!email || !password || !name) {
     return res.status(400).send('Email, password, and name are required.');
@@ -56,14 +56,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).send('Password must be at least 6 characters.');
   }
 
-  // Check auth - either valid token OR valid register key
+  // Check auth - must have valid admin token
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   const payload = verifyToken(token || '');
-  const isAuthorized = payload || (registerKey && registerKey === ADMIN_REGISTER_KEY && ADMIN_REGISTER_KEY);
 
-  if (!isAuthorized) {
-    return res.status(401).send('Unauthorized. Provide valid auth or register key.');
+  if (!payload) {
+    return res.status(401).send('Unauthorized. You must be logged in as an admin to create new admins.');
   }
 
   const { data: existing } = await supabase
