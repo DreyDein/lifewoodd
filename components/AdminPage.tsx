@@ -165,7 +165,7 @@ function RegisterScreen({ onRegister, onSwitchToLogin }: { onRegister: () => voi
     try {
       await apiFetch('/api/admin-register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, registerKey: 'admin-register-key' }),
       });
       onRegister();
     } catch (err: any) {

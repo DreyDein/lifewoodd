@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
+const ADMIN_REGISTER_KEY = process.env.ADMIN_REGISTER_KEY || '';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
@@ -41,23 +42,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).send('Method not allowed.');
 
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  const payload = verifyToken(token || '');
-  if (!payload) return res.status(401).send('Unauthorized.');
-
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
 
-  const { email, password, name } = body || {};
+  const { email, password, name, registerKey } = body || {};
 
   if (!email || !password || !name) {
     return res.status(400).send('Email, password, and name are required.');
   }
   if (password.length < 6) {
     return res.status(400).send('Password must be at least 6 characters.');
+  }
+
+  // Check auth - either valid token OR valid register key
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const payload = verifyToken(token || '');
+  const isAuthorized = payload || (registerKey && registerKey === ADMIN_REGISTER_KEY && ADMIN_REGISTER_KEY);
+
+  if (!isAuthorized) {
+    return res.status(401).send('Unauthorized. Provide valid auth or register key.');
   }
 
   const { data: existing } = await supabase

@@ -29,6 +29,7 @@ app.use(express.json({ limit: '1mb' }));
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-me';
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || 'change-me';
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
+const ADMIN_REGISTER_KEY = process.env.ADMIN_REGISTER_KEY || 'admin-register-key';
 
 if (ADMIN_PASSWORD === 'change-me' || ADMIN_TOKEN_SECRET === 'change-me') {
   console.warn('⚠️  Admin auth is using default credentials. Set ADMIN_PASSWORD and ADMIN_TOKEN_SECRET.');
@@ -183,9 +184,17 @@ app.post('/api/admin-login', handleAdminLogin);
 
 // ── Admin registration (by existing admin) ─────────────────────────────────
 const handleAdminRegister = async (req, res) => {
-  const { email, password, name } = req.body || {};
+  const { email, password, name, registerKey } = req.body || {};
   if (!email || !password || !name) { res.status(400).send('Email, password, and name are required.'); return; }
   if (password.length < 6) { res.status(400).send('Password must be at least 6 characters.'); return; }
+  
+  // Check if caller is authorized (either has valid token OR correct register key)
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const payload = verifyToken(token || '');
+  const isAuthorized = payload || (registerKey === ADMIN_REGISTER_KEY);
+  
+  if (!isAuthorized) { res.status(401).send('Unauthorized.'); return; }
   
   const { data: existing } = await supabase
     .from('admins')
