@@ -70,6 +70,12 @@ const initAdminsTable = async () => {
 
 await initAdminsTable();
 
+// ── Debug endpoint ─────────────────────────────────────────────────────────────
+app.get('/api/admin/debug', async (req, res) => {
+  const { data, error } = await supabase.from('admins').select('email, name');
+  res.json({ admins: data, error, supabaseUrl: !!process.env.SUPABASE_URL, hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY });
+});
+
 // ── Multer ────────────────────────────────────────────────────────────────────
 const allowedExtensions = new Set(['.pdf', '.doc', '.docx']);
 const upload = multer({
@@ -145,6 +151,8 @@ const writeJsonLines = async (filePath, entries) => {
 // ── Admin login ───────────────────────────────────────────────────────────────
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body || {};
+  console.log('Login attempt:', email);
+  
   if (!email || !password) { res.status(400).send('Email and password are required.'); return; }
   
   const { data: admins, error } = await supabase
@@ -153,11 +161,15 @@ app.post('/api/admin/login', async (req, res) => {
     .eq('email', email.toLowerCase())
     .limit(1);
   
-  if (error) { console.error('Login query error:', error); res.status(500).send('Server error.'); return; }
-  if (!admins?.length) { res.status(401).send('Invalid credentials.'); return; }
+  if (error) { console.error('Login query error:', error); res.status(500).send('Server error: ' + error.message); return; }
+  if (!admins?.length) { 
+    console.log('No admin found for:', email.toLowerCase());
+    res.status(401).send('Invalid credentials.'); return; }
   
   const admin = admins[0];
+  console.log('Admin found:', admin.email);
   const valid = await bcrypt.compare(password, admin.password_hash);
+  console.log('Password valid:', valid);
   if (!valid) { res.status(401).send('Invalid credentials.'); return; }
   
   res.status(200).json({ 
