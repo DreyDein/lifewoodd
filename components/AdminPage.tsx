@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import AdminManagement from './AdminManagement';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface EmailEntry {
@@ -641,6 +642,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdminMgmt, setShowAdminMgmt] = useState(false);
   const [profile, setProfile] = useState<AdminProfile>(getProfile());
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
@@ -778,6 +780,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <input type="text" placeholder="Search by name, email, or position..." value={search} onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-[#133020] placeholder-gray-400 outline-none" />
           </div>
+          <button onClick={() => setShowAdminMgmt(true)}
+            className="px-4 py-2 rounded-xl text-sm font-semibold bg-white text-gray-500 border border-gray-200 hover:bg-gray-50">
+            Manage Admins
+          </button>
         </div>
 
         {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
@@ -918,6 +924,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
       {selected && <DetailModal entry={selected} onClose={() => setSelected(null)} onRespond={handleRespond} />}
       {showProfile && <ProfilePanel onClose={() => setShowProfile(false)} onLogout={onLogout} />}
+      {showAdminMgmt && <AdminManagement onClose={() => setShowAdminMgmt(false)} />}
     </div>
   );
 }
